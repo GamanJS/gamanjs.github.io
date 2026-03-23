@@ -70,6 +70,7 @@ export default defineConfig({
         },
         items: [
           { label: "First Steps", link: "docs/overview/first-steps" },
+          { label: "Bootstrap", link: "docs/overview/bootstrap" },
           { label: "Routing", link: "docs/overview/routing" },
           { label: "Controllers", link: "docs/overview/controllers" },
           {

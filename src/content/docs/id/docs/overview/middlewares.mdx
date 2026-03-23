@@ -1,151 +1,181 @@
 ---
 title: Middlewares
-description: Middleware in GamanJS provides a powerful way to process requests before they reach the route handler. Middleware can be defined globally for all routes in a Block or scoped to specific paths and HTTP methods. Middleware functions are designed to continue to the next handler when they do not return a response.
+description: Middleware di GamanJS berjalan sebelum handler route untuk pengecekan, modifikasi context,atau penghentian request.
 ---
 
+Middleware di GamanJS berjalan **sebelum** handler route dan bisa melakukan pengecekan, modifikasi context, atau menghentikan request sebelum sampai ke controller.
 
-Normalnya **Middleware Gaman** itu terletak di folder `src/middlewares/**` jadi semisal anda memakai `autoComposeMiddleware((ctx, next) => next())` itu akan otomatis di register oleh sistem.
-
-![workflow middleware](/img/workflow/middleware.png)
-
-Middleware disini berperan sebagai guard sistem request, middleware akan di jalankan pertama kali saat request masuk, jadi sebelum `interceptor` lalu `handler`, `middleware` akan di jalankan terlebih dahulu.
-
-## Middleware definition
-
-### `composeMiddleware()`
-disini kita memakai `composeMiddleware` yang berarti tidak akan otomatis di register ke data `middlewares` jadi anda harus manual meregister ke `index.ts`
+## Membuat Middleware
 
 ```ts
-// AppMiddleware.ts
-import { composeMiddleware } from "@gaman/core"
+// src/module/middlewares/AppMiddleware.ts
+import { composeMiddleware } from 'gaman/compose';
 
-export default composeMiddleware((ctx, next) => {
-  return next()
+export default composeMiddleware(async (ctx, next) => {
+  // Logic sebelum handler
+  console.log(`[${ctx.request.method}] ${ctx.path}`);
+
+  // Lanjutkan ke handler / middleware berikutnya
+  return next();
 });
 ```
-setelah itu anda harus meregister manual ke file `src/index.ts`
-```ts
-// index.ts
-import { AppMiddleware } from "./middlewares/AppMiddleware.ts"
-import { AuthMiddleware } from "./middlewares/AuthMiddleware.ts"
 
-defineBootstrap((app) => {
-  app.mount(AppMiddleware());
+`composeMiddleware` mengembalikan **factory function** — harus dipanggil `()` saat didaftarkan.
 
-})
-```
-atau bisa di register ke dalam router tertentu berikut adalah contohnya:
-```ts
-// AppRoutes.ts
-import { AppMiddleware } from "./middlewares/AppMiddleware.ts"
-import { AuthMiddleware } from "./middlewares/AuthMiddleware.ts"
+### Menghentikan Request
 
-export default autoComposeRoutes((route) => {
-  route
-    .get('/generate-token', Handler)
-    .middleware(AppMiddleware()) // single middleware
-    .middleware([AppMiddleware(), AuthMiddleware()]) // multi middleware
-  
-  route.group('/user', (route) => {
-    route.post('/create', Handler)
-    route.get('/profile', Handler)
-  }).middleware(AppMiddleware()) // single middleware
-    .middleware([AppMiddleware(), AuthMiddleware()]) // multi middleware
-})
-```
-jika anda menaruh middleware ke group maka routes di dalamnya akan terkena efeknya juga
-
-
-### `autoComposeMiddleware()`
-disini kita memakai `autoComposeMiddleware` yang berarti akan otomatis di register ke data `middlewares` dengan persyaratan harus berada di folder `src/middlewares/**`
+Jika middleware ingin menghentikan request (misal: auth gagal), **jangan panggil `next()`**, langsung return `Res`:
 
 ```ts
-// AppMiddleware.ts
-import { autoComposeMiddleware } from "@gaman/core"
+import { composeMiddleware } from 'gaman/compose';
 
-export default autoComposeMiddleware((ctx, next) => {
+export default composeMiddleware(async (ctx, next) => {
+  const token = ctx.header('Authorization');
+
+  if (!token) {
+    return Res.message('Unauthorized').unauthorized();
+  }
+
+  // Token valid, lanjutkan
   return next();
-})
+});
 ```
-ini akan otomatis di register ke dalam data `middlewares` jadi anda tidak perlu register manual.
 
+## Middleware Global
 
-## Middleware Config
-disini gaman sudah menyiapkan default config bawaan middleware yang bisa kamu pakai
-
-### Priority
-`priority` adalah config yang sangat berguna untuk semakin tinggal prioritas nya maka proses akan di jalankan lebih awal dari yang lain
+Daftarkan di `defineBootstrap` via `app.mount()`:
 
 ```ts
-import { Priority } from "@gaman/common"
+import { defineBootstrap } from 'gaman';
+import router from './router';
+import LogMiddleware from './module/middlewares/LogMiddleware';
 
-export default composeMiddleware((ctx, next) => {
+defineBootstrap(async (app) => {
+  // Middleware global — berjalan di SEMUA route
+  app.mount(LogMiddleware());
+
+  app.mount(router);
+  app.mountServer({ http: 3431 });
+});
+```
+
+## Middleware Per-Route
+
+Daftarkan langsung di route definition:
+
+```ts
+import { composeRouter } from 'gaman/compose';
+import AuthMiddleware from './module/middlewares/AuthMiddleware';
+import UserController from './module/controllers/UserController';
+
+export default composeRouter((r) => {
+  r.get('/profile', [UserController, 'Profile'])
+    .middleware(AuthMiddleware());
+});
+```
+
+## Middleware pada Group
+
+Berlaku ke semua route dalam group:
+
+```ts
+r.group('/admin', (admin) => {
+  admin.get('/dashboard', [AdminController, 'Dashboard']);
+  admin.get('/settings', [AdminController, 'Settings']);
+}).middleware(AuthMiddleware());
+```
+
+## Priority System
+
+Middleware memiliki **priority** yang mengatur urutan eksekusi. Priority lebih rendah (angka lebih kecil) dijalankan lebih dulu.
+
+```ts
+import { Priority } from 'gaman/utils';
+```
+
+| Priority | Nilai | Keterangan |
+|----------|-------|------------|
+| `MONITOR` | `0` | Paling awal, untuk logging/monitoring |
+| `VERY_HIGH` | `1` | Sangat tinggi |
+| `HIGH` | `2` | Tinggi |
+| `NORMAL` | `3` | Default |
+| `LOW` | `4` | Rendah |
+| `VERY_LOW` | `5` | Paling akhir |
+
+### Default Config
+
+```ts
+export default composeMiddleware(
+  async (ctx, next) => {
+    return next();
+  },
+  { priority: Priority.NORMAL }, // default config
+);
+```
+
+### Override Saat Digunakan
+
+```ts
+app.mount(LogMiddleware({ priority: Priority.MONITOR }));
+app.mount(AuthMiddleware({ priority: Priority.HIGH }));
+```
+
+### Custom Config
+
+Middleware bisa menerima konfigurasi custom:
+
+```ts
+import { composeMiddleware } from 'gaman/compose';
+
+type CorsConfig = {
+  origin: string;
+  methods: string[];
+};
+
+export default composeMiddleware<CorsConfig>(
+  async (ctx, next) => {
+    ctx.headers.set('Access-Control-Allow-Origin', '*');
+    return next();
+  },
+  {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    priority: Priority.VERY_HIGH,
+  },
+);
+```
+
+Penggunaan:
+
+```ts
+app.mount(CorsMiddleware({ origin: 'https://example.com' }));
+```
+
+## Menyimpan Data di Context
+
+Middleware bisa menyimpan data yang bisa diakses oleh handler:
+
+```ts
+export default composeMiddleware(async (ctx, next) => {
+  const user = await verifyToken(ctx.header('Authorization'));
+  ctx.set('user', user);   // Simpan ke context
   return next();
-}, {
-  priority: Priority.NORMAL 
-})
+});
 ```
-### Includes
-`includes` disini iyalah berfungsi untuk ngefilter route atau path mana, yang mau menjalankan middleware
+
+Akses di controller:
 
 ```ts
-export default composeMiddleware((ctx, next) => {
-  return next()
-}, {
-  inclues: [
-    {
-      path: '/user{/*splat}' // artinya path /user dan setelahnya akan kena middleware
-    },
-    {
-      path: '/blog/*splat' // artinya setelah path /blog/ akan middleware kecuali path /blog sendiri
-      method: ['GET', "POST"] // jadi kusus method GET dan POST doang 
-    },
-    "/dashboard" // path /dashboard akan kena middleware
-  ]
-})
+GetProfile(ctx) {
+  const user = ctx.get('user');  // Ambil dari context
+  return Res.send(user);
+}
 ```
 
-### Excludes
-`excludes` disini iyalah berfungsi untuk ngefilter route atau path mana, yang tidak akan menjalankan middleware
+## Pipeline Eksekusi
 
-```ts
-export default composeMiddleware((ctx, next) => {
-  return next()
-}, {
-  excludes: [
-    {
-      path: '/profile{/*splat}' // artinya path /profile dan setelahnya tidak akan kena middleware
-    },
-    {
-      path: '/setting/*splat' // artinya setelah path /setting/ tidak akan middleware kecuali path /setting sendiri
-      method: ['GET', "POST"]
-    },
-    "/" // path root tidak akan kena middleware
-  ]
-})
+Urutan middleware pipeline:
+
 ```
-:::tip[path-to-regexp]
-Kami memakai library `path-to-regexp` untuk memanipulasi path url nya jadi jika anda ingin banyak informasi tentang path dan experiment lainnya bisa kunjungin repository berikut ["path-to-regexp"](https://github.com/pillarjs/path-to-regexp)
-:::
-
-Config Middleware juga bisa anda setting saat meregister ke dalam route, tetapi hanya `composeMiddleware` tidak dengan `autoComposeMiddleware` karna itu dah otomatis jadi global middleware.
-
-Contoh:
-```ts
-// index.ts
-defineBootstrap((app) => {
-  app.mount(AppMiddleware({
-    priority: Priority.HIGH,
-    includes: ['/dashboard']
-  }))
-})
-// AppRoutes.ts
-composeRoutes((route) => {
-  route.get('/', Handler).middleware(AppMiddleware({
-    excludes: [{
-      path: '/api/*splat'
-    }]
-  }))
-})
+Request → Global Middlewares (sorted by priority) → Route Middlewares → Handler → Response
 ```
-

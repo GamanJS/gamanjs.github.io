@@ -1,44 +1,63 @@
 ---
-title: Langkah Awal
-description: GamanJS is a modular and efficient backend framework designed for simplicity and performance. Follow the steps below to quickly get started with your first GamanJS project.
+title: Memulai
+description: Mulai dengan GamanJS — framework HTTP cepat yang dibangun di atas Bun runtime untuk membangun REST API terstruktur.
 ---
 
-### Bahasa
+## Persyaratan
 
-GamanJS dirancang khusus untuk bekerja dengan ***TypeScript*** dan ***JavaScript*** modern menggunakan sistem Modul ***ECMAScript (ESM)***. Ini berarti semua modul harus ditulis menggunakan sintaksis **import** dan **export** CommonJS (require, modul.exports) tidak didukung. Jika Anda membangun proyek dengan GamanJS, pastikan lingkungan dan basis kode Anda sepenuhnya kompatibel dengan **ESM**.
+- [Bun](https://bun.sh) `v1.0+`
 
-### Prasyarat
+## Membuat Project Baru
 
-Tolong pastikan `Node.js` (version => 20.x) terinstal pada sistem operasi Anda.
+```bash
+bun create gaman@latest
+```
 
----
+Perintah ini akan men-generate project baru dengan struktur berikut:
 
-## Buat proyek pertama
+```
+my-app/
+├── src/
+│   ├── index.ts                      # Entry point & bootstrap
+│   ├── router.ts                     # Definisi route
+│   └── module/
+│       ├── controllers/
+│       │   └── AppController.ts      # Controller contoh
+│       ├── services/
+│       │   └── AppService.ts         # Service contoh
+│       └── middlewares/
+│           └── AppMiddleware.ts      # Middleware contoh
+├── package.json
+└── tsconfig.json
+```
 
-import { PackageManagers } from "starlight-package-managers";
+## Instalasi Manual
 
-GamanJS adalah kerangka kerja untuk aplikasi backend, Anda dapat membuatnya menggunakan manajer paket favorit Anda:
+Jika kamu ingin menambahkan GamanJS ke project yang sudah ada:
 
-<PackageManagers
-  pkg="gaman@latest"
-  pkgManagers={["npm", "pnpm", "yarn", "bun"]}
-  type="create"
-/>
+```bash
+bun add gaman @gaman/michi
+```
 
-## Struktur Proyek
+## Menjalankan Server
 
-import { FileTree } from "@astrojs/starlight/components";
+```bash
+bun run src/index.ts
+```
 
-Setelah membuat proyek baru, struktur file Anda akan terlihat seperti ini:
+Output:
 
-<FileTree>
-- src
-  - controllers
-    - AppController.ts
-  - routes
-    - AppRoutes.ts
-  - index.d.ts
-  - index.ts
-- package.json
-- tsconfig.json
-</FileTree>
+```
+GamanJS Framework v2
+A Lean Framework for Heavy-Duty Enterprise Performance.
+ ──────────────────────────────────────
+HTTP  : Listening at http://localhost:3431
+ ──────────────────────────────────────
+Orchestration complete. Ready for requests.
+```
+
+## Selanjutnya
+
+- [Bootstrap](/id/docs/overview/bootstrap) — Konfigurasi dan menjalankan server
+- [Router](/id/docs/overview/routing) — Mendefinisikan route
+- [Controller](/id/docs/overview/controllers) — Memisahkan handler logic

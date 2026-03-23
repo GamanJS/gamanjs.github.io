@@ -1,63 +1,121 @@
 ---
-
 title: Controllers
-
+description: Controllers in GamanJS handle HTTP requests using composeController with simple dependency injection.
 ---
 
-**Gaman Controller** is actually quite simple; it only uses `composeController`.
+Controllers in GamanJS handle HTTP requests. Use `composeController` to create structured controllers with simple dependency injection.
+
+## Creating a Controller
 
 ```ts
-
-// UserController.ts
-
-import { composeController } from "@gaman/core"
+// src/module/controllers/AppController.ts
+import { composeController } from 'gaman/compose';
 
 export default composeController(() => ({
-
-  CreateUser: (ctx) => {
-
-    return Res.json({message: "user created!"})
-
+  HelloWorld(ctx) {
+    return Res.message('Hello World!');
   },
 
-  UpdateUser: (ctx) => {
-
-    return Res.json({message: "user updated!"})
-
+  About(ctx) {
+    return Res.send({ name: 'GamanJS', version: '2.0' });
   },
-
-  DeleteUser: (ctx) => {
-
-    return Res.json({message: 'user deleted!'})
-
-  }
-
-}))
-
+}));
 ```
 
-Then you can add the controller and handler to the router as follows:
+`composeController` takes a **factory function** that returns an object containing handler methods. Each method receives `ctx` ([Context](/docs/technical/context)) as a parameter.
+
+## Dependency Injection
+
+Controllers support DI through **default parameters** in the factory function:
 
 ```ts
+import { composeController } from 'gaman/compose';
+import UserService from '../services/UserService';
+import type { RT } from 'gaman/types';
 
-// AppRoutes.ts
+export default composeController(
+  (userService: RT<typeof UserService> = UserService()) => ({
+    GetAll(ctx) {
+      const users = userService.findAll();
+      return Res.send(users);
+    },
 
-import { autoComposeRoutes } from "@gaman/core"
+    GetById(ctx) {
+      const id = ctx.param('id');
+      const user = userService.findById(id);
 
-import { UserController } from "../controllers/UserController.ts"
+      if (!user) {
+        return Res.message('User not found').notFound();
+      }
 
-export default autoComposeRoutes((route) => {
+      return Res.send(user);
+    },
 
-  route.group('/user', (route) => {
-
-    route.post('/create', [UserController, 'CreateUser'])
-
-    route.put('/update', [UserController, 'UpdateUser'])
-
-    route.delete('/delete', [UserController, 'DeleteUser'])
-
-  })
-
-})
-
+    async Create(ctx) {
+      const body = await ctx.json();
+      const user = userService.create(body);
+      return Res.send(user, 201);
+    },
+  }),
+);
 ```
+
+### Type Helper `RT<T>`
+
+`RT` is a shortcut for `ReturnType<typeof T>`. Use it to get the return type of a service:
+
+```ts
+import type { RT } from 'gaman/types';
+
+// Instead of:
+type UserServiceType = ReturnType<typeof UserService>;
+
+// Use:
+type UserServiceType = RT<typeof UserService>;
+```
+
+## Multiple Services
+
+```ts
+import { composeController } from 'gaman/compose';
+import UserService from '../services/UserService';
+import EmailService from '../services/EmailService';
+import type { RT } from 'gaman/types';
+
+export default composeController(
+  (
+    userService: RT<typeof UserService> = UserService(),
+    emailService: RT<typeof EmailService> = EmailService(),
+  ) => ({
+    async Register(ctx) {
+      const body = await ctx.json();
+      const user = userService.create(body);
+      emailService.sendWelcome(user.email);
+      return Res.send(user, 201);
+    },
+  }),
+);
+```
+
+## Registering in the Router
+
+Controllers are registered using the **tuple** format `[ControllerFactory, 'MethodName']`:
+
+```ts
+import { composeRouter } from 'gaman/compose';
+import UserController from './module/controllers/UserController';
+
+export default composeRouter((r) => {
+  r.get('/users', [UserController, 'GetAll']);
+  r.get('/users/:id', [UserController, 'GetById']);
+  r.post('/users', [UserController, 'Create']);
+  r.put('/users/:id', [UserController, 'Update']);
+  r.delete('/users/:id', [UserController, 'Delete']);
+});
+```
+
+## Tips
+
+- A single controller file can contain many methods — group them by domain/resource
+- Use `RT<typeof Service>` for type-safe DI
+- Controllers should only contain **handling** logic — put business logic in [Services](/docs/overview/services)

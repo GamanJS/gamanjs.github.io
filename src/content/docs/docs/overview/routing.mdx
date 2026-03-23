@@ -1,209 +1,168 @@
 ---
 title: Routing
+description: GamanJS uses composeRouter to declaratively define all application routes with support for HTTP methods, grouping, middleware, and exception handlers.
 ---
 
-Normally **Gaman Routing** is located in the folder `src/routes/**` so if you use `autoComposeRoutes((route) => {})` it will be automatically registered by the system.
-Example as follows
+GamanJS uses `composeRouter` to declaratively define all application routes. The router supports all HTTP methods, route grouping, per-route middleware, and per-route exception handlers.
 
-## Routes definition
-
-### `composeRoutes()`
-
-Here we use `composeRoutes` which means it will not be automatically registered to the `routes` data, so you have to manually register it to `index.ts`
+## Basic Usage
 
 ```ts
-// AppRoutes.ts
-import { composeRoutes } from "@gaman/core"
+// src/router.ts
+import { composeRouter } from 'gaman/compose';
+import AppController from './module/controllers/AppController';
 
-export default composeRoutes((route) => {
-  route.get('/', (ctx) => {
-    return Res.json({ message: "OK!" })
-  })
-})
+export default composeRouter((r) => {
+  r.get('/', [AppController, 'HelloWorld']);
+  r.post('/users', [AppController, 'CreateUser']);
+});
 ```
 
-Here you need to manually register the routes to the `src/index.ts` file
+## HTTP Methods
+
+All standard HTTP methods are available:
 
 ```ts
-// index.ts
-import { AppRoutes } from "./routes/AppRoutes.ts"
-
-defineBootstrap((app) => {
-  app.mount(AppRoutes)
-})
+export default composeRouter((r) => {
+  r.get('/resource', handler);
+  r.post('/resource', handler);
+  r.put('/resource/:id', handler);
+  r.patch('/resource/:id', handler);
+  r.delete('/resource/:id', handler);
+  r.head('/resource', handler);
+  r.options('/resource', handler);
+  r.all('/resource', handler);    // GET, POST, PUT, DELETE, PATCH
+});
 ```
 
-### `autoComposeRoutes()`
-
-Here we use `autoComposeRoutes` which means routes will be automatically registered to the `routes` data. With the requirement that it must be in the folder `src/routes/**`
+### Custom Methods
 
 ```ts
-// AppRoutes.ts
-import { autoComposeRoutes } from "@gaman/core"
-
-export default autoComposeRoutes((route) => {
-  route.get('/', (ctx) => {
-    return Res.json({ message: "OK!" })
-  })
-})
+r.match(['GET', 'POST'], '/custom', handler);
 ```
 
-After that, the routes will be automatically registered to the `routes` data
+## Handler Types
 
-## Routing
+A handler can be a **function** directly or a **Controller tuple**:
 
-Here we will enter into route management within the compose that we have created
-
-### Basic Routing
-
-The most basic GamanJS routing, accepts URL path and creates handler directly in the route
+### Function Handler
 
 ```ts
-// AppRoutes.ts
-export default autoComposeRoutes((route) => {
-  route.get('/', (ctx) => {
-    return Res.json({ message: "OK!" })
-  })
-})
+r.get('/ping', (ctx) => {
+  return Res.message('pong');
+});
 ```
 
-### Available Router Methods
-
-Here Gaman has prepared common shortcut methods for you to use
+### Controller Handler (Recommended)
 
 ```ts
-route.get('/', Handler)
-route.post('/', Handler)
-route.put('/', Handler)
-route.patch('/', Handler)
-route.delete('/', Handler)
-route.head('/', Handler)
-route.options('/', Handler)
+import UserController from './module/controllers/UserController';
+
+r.get('/users', [UserController, 'GetAll']);
+r.get('/users/:id', [UserController, 'GetById']);
+r.post('/users', [UserController, 'Create']);
 ```
 
-One day you will need more settings for the router, here I have made additional utilities
-If you want to create routing for specific methods you can use `match`. Or if you want to create routing for all methods you can use `all`.
+Format: `[ControllerFactory, 'MethodName']`
+
+## Route Parameters
+
+Use `:name` for dynamic parameters:
 
 ```ts
-route.match(['GET', 'POST'], '/', Handler)
-
-route.all('/', Handler)
+r.get('/users/:id', [UserController, 'GetById']);
+r.get('/posts/:postId/comments/:commentId', [PostController, 'GetComment']);
 ```
 
-### Parameter
+Access in handler via `ctx.param('id')` or `ctx.params`.
 
-If you want to create dynamic paths like `/player/:name`
+## Route Grouping
+
+Group routes with a shared prefix:
 
 ```ts
-route.delete('/player/:id/delete', (ctx) => {
-  const { id } = ctx.params;
-  // TODO Delete player
-  return Res.json({message: `Player ${id} deleted.`})
-})
+export default composeRouter((r) => {
+  r.group('/api/v1', (api) => {
+    api.get('/users', [UserController, 'GetAll']);
+    api.post('/users', [UserController, 'Create']);
+
+    api.group('/admin', (admin) => {
+      admin.get('/dashboard', [AdminController, 'Dashboard']);
+    });
+  });
+});
 ```
 
-If you access the URL `/player/155/delete` then `{ id }` will be `155`
+Resulting routes:
+- `GET /api/v1/users`
+- `POST /api/v1/users`
+- `GET /api/v1/admin/dashboard`
 
-:::tip[Parameters?]
-If you want to know more about the **Context Parameter** function please open the following link ["Parameters"](/docs/technical/context/#params)
-:::
+## Route Middleware
 
-### Optional Parameter
-
-If you want to create optional parameters it's very easy, for example `/player{/:id}/delete`
+Add per-route middleware using `.middleware()` chaining:
 
 ```ts
-route.delete('/player{/:id}/delete', (ctx) => {
-  const id = ctx.param('id');
-  if(!id){
-    return Res.json({message: 'Id must be there!'}, 400)
-  }
+import AuthMiddleware from './module/middlewares/AuthMiddleware';
 
-  // TODO delete player
-  return Res.json({message: `Player ${id} deleted.`})
-})
+export default composeRouter((r) => {
+  // Route without middleware
+  r.get('/public', [AppController, 'Public']);
+
+  // Route with middleware
+  r.get('/protected', [AppController, 'Protected'])
+    .middleware(AuthMiddleware());
+
+  // Multiple middleware
+  r.post('/admin/action', [AdminController, 'DoAction'])
+    .middleware(AuthMiddleware())
+    .middleware(RateLimitMiddleware());
+});
 ```
 
-So if you access the URL `/player/delete` then the response will be `status: 400`.
-If you access the URL `/player/155/delete` then the response will be `status: 200`
+### Group Middleware
 
-:::tip[path-to-regexp]
-We use the `path-to-regexp` library to manipulate the path URL, so if you want more information about path and other experiments, you can visit the following repository ["path-to-regexp"](https://github.com/pillarjs/path-to-regexp)
-:::
-
-## Route Handler
-
-For route handler there are 3 types in Gaman, you can use one of them
-
-### Basic Handler
-
-This handler is suitable for super simple and minimalist projects, or when you're on a tight deadline, you can temporarily use a handler like this.
+Automatically applied to all routes in the group:
 
 ```ts
-route.get('/', (ctx) => {
-  return Res.text("OK!")
-})
+r.group('/admin', (admin) => {
+  admin.get('/dashboard', [AdminController, 'Dashboard']);
+  admin.get('/users', [AdminController, 'Users']);
+}).middleware(AuthMiddleware());
 ```
 
-### Request Handler
+## Route Exception Handler
 
-This handler is also suitable for small-scale projects that you can use, and this is also recommended, it's better to use than the `basic handler` earlier, here is the example:
+Override error handling for specific routes:
 
 ```ts
-// AppHandler.ts
-import { RequestHandler } from "@gaman/common"
+import { composeException } from 'gaman/compose';
 
-export const CreateUser: RequestHandler = (ctx) => {
-  return Res.json(ctx.params)
-}
+const CustomErrorHandler = composeException((error, ctx) => {
+  return Res.send({ detail: error.message }, 500);
+});
+
+r.get('/risky', [AppController, 'Risky'])
+  .exception(CustomErrorHandler);
 ```
 
-Then in `AppRoutes.ts` you can use the handler
+## Route Naming
+
+Give routes a name for reference:
 
 ```ts
-// AppRoutes.ts
-import { CreateUser } from "AppHandler.ts"
-
-export default autoComposeRoutes((route) => {
-  route.post("/user/create", CreateUser)
-})
+r.get('/users/:id', [UserController, 'GetById'])
+  .name('users.show');
 ```
 
-### Controller Handler
+## Full Chaining
 
-This one is suitable for large and small scale projects, and the code will remain clean because there are not many handler imports.
+All route methods return a `RouteDefinition` supporting chaining:
 
 ```ts
-// AppController.ts
-import { composeController } from "@gaman/core"
-
-export default composeController(() => ({
-  HelloWorld(ctx) {
-    return Res.text("❤️ Welcome to Gaman.js")
-  }
-}))
-```
-
-And this for the routes
-
-```ts
-// AppRoutes.ts
-import AppController from "../controllers/AppController.ts"
-
-export default autoComposeRoutes((route) => {
-  route.get("/", [AppController, 'HelloWorld'])
-})
-```
-
-A little explanation, there is an array `[controller, functionName]`, so the array in the **first index** is the controller container, and for the array in the **second index** is the function name inside the controller container.
-
-## Route Groups
-
-Route group here to wrap routes into 1 path
-
- ```ts
-route.group('/user', (route) => {
-  route.post('/create', Handler); // `/user/create` (POST)
-  route.get('/profile', Handler) // `/user/profile` (GET)
-})
+r.post('/users', [UserController, 'Create'])
+  .middleware(AuthMiddleware())
+  .middleware(ValidateMiddleware())
+  .exception(CustomErrorHandler)
+  .name('users.create');
 ```

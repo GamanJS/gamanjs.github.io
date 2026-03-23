@@ -2,28 +2,133 @@
 title: Introduction
 ---
 
-## What is Gaman?
+> _A Lean Framework for Heavy-Duty Enterprise Performance._
 
-GamanJS is a JavaScript framework focused on backend applications. Initially, this project was created just as a hobby. And congratulations to me, this is the largest project I've ever made.
+GamanJS is a lightweight, fast HTTP framework built on top of [Bun](https://bun.sh) runtime. Designed for building structured REST APIs with a clean **Controller-Service-Middleware** architecture that's easy to maintain.
 
-## Philosophy
+## ✨ Key Features
 
-The name ***Gaman*** is taken from Japanese words like "gaman shinasai" or "gaman dekinai" which mean to be patient or endure. This philosophy reflects the spirit to remain patient and consistent in developing something to completion.
+- ⚡ **Blazing Fast** — Built on Bun's native `Bun.serve()` for maximum performance
+- 🏗️ **Structured Architecture** — Built-in Controller / Service / Middleware pattern
+- 📦 **Standardized Response** — Consistent API response format via global `Res`
+- 🔀 **Declarative Router** — Clean route definition with `composeRouter`
+- 🧩 **Simple Dependency Injection** — DI via default parameters in controllers
+- 🛡️ **Exception Handling** — Global & per-route exception handlers
+- 🎯 **Middleware Priority** — Control middleware execution order
 
-## Motivation
+## 📚 Table of Contents
 
-Starting from just a hobby project. Usually, other projects never finish, but somehow GamanJS managed to achieve it. That's why now there's motivation to continue developing this framework.
+| Page | Description |
+|------|-------------|
+| [Getting Started](/docs/overview/first-steps) | Installation & creating a new project |
+| [Bootstrap](/docs/overview/bootstrap) | `defineBootstrap` & server configuration |
+| [Router](/docs/overview/routing) | Route definition, grouping, & methods |
+| [Controller](/docs/overview/controllers) | Creating controllers with `composeController` |
+| [Service](/docs/overview/services) | Business logic with `composeService` |
+| [Middleware](/docs/overview/middlewares) | Middleware & priority system |
+| [Response](/docs/overview/responses) | Standardized API response with `Res` |
+| [Context](/docs/technical/context) | Request context (`ctx`) in detail |
+| [Exception Handler](/docs/overview/exceptions) | Global & per-route error handling |
 
-Developed by an individual under the name 7TogkID, GamanJS continues to evolve by adding various functions and utilities useful for backend development.
+## 🚀 Quick Start
 
-{/* ## Why Indonesian?
+```bash
+bun create gaman@latest
+```
 
-Because actually I'm not very good at English, I once made English documentation from translate + AI, the language became weird and hard to understand (according to people who use Gaman).
+```
+src/
+├── index.ts              # Application bootstrap
+├── router.ts             # All route definitions
+└── module/
+    ├── controllers/
+    │   └── AppController.ts
+    ├── services/
+    │   └── AppService.ts
+    └── middlewares/
+        └── AppMiddleware.ts
+```
 
-So I decided to target the local market first, which is (Indonesia).
+### `src/index.ts`
 
-And I hope someone helps contribute to creating English documentation :) */}
+```ts
+import { defineBootstrap } from 'gaman';
+import router from './router';
 
----
+defineBootstrap(async (app) => {
+  app.mount(router);
+  app.mountServer({ http: 3431 });
+});
+```
 
-> GamanJS is here to help developers build backend applications with a simple yet sophisticated approach.
+### `src/router.ts`
+
+```ts
+import { composeRouter } from 'gaman/compose';
+import AppController from './module/controllers/AppController';
+
+export default composeRouter((r) => {
+  r.get('/', [AppController, 'HelloWorld']);
+});
+```
+
+### `src/module/controllers/AppController.ts`
+
+```ts
+import { composeController } from 'gaman/compose';
+import AppService from '../services/AppService';
+import type { RT } from 'gaman/types';
+
+export default composeController(
+  (appService: RT<typeof AppService> = AppService()) => ({
+    HelloWorld(ctx) {
+      return Res.message(appService.WelcomeMessage());
+    },
+  }),
+);
+```
+
+### `src/module/services/AppService.ts`
+
+```ts
+import { composeService } from 'gaman/compose';
+
+export default composeService(() => ({
+  WelcomeMessage() {
+    return '❤️ Welcome to GamanJS';
+  },
+}));
+```
+
+### `src/module/middlewares/AppMiddleware.ts`
+
+```ts
+import { composeMiddleware } from 'gaman/compose';
+
+export default composeMiddleware(async (ctx, next) => {
+  return next();
+});
+```
+
+Run the server:
+
+```bash
+bun run dev
+```
+
+Server will start at `http://localhost:3431`. Access the `/` endpoint and you'll get a standardized response:
+
+```json
+{
+  "success": true,
+  "message": "❤️ Welcome to GamanJS",
+  "metadata": {
+    "requestId": "abc123...",
+    "timestamp": "2026-03-23T07:00:00.000Z"
+  }
+}
+```
+
+## 📄 License
+
+MIT © [Angga7Togk](https://github.com/angga7togk)

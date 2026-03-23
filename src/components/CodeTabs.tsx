@@ -17,23 +17,23 @@ const FILES: Record<Section, FileMap> = {
     lang: "ts",
     title: "Entry Point",
     desc: "The main entry file where the GamanJS server is initialized using `defineBootstrap`.",
-    code: `import { defineBootstrap } from '@gaman/core';
-import { Log } from '@gaman/common';
+    code: `import { defineBootstrap } from 'gaman';
+import router from './router';
 
 defineBootstrap(async (app) => {
-  await app.mountServer(':3431');
-  Log.info('Server is running at http://localhost:3431');
+  app.mount(router);
+  app.mountServer({ http: 3431 });
 });`,
   },
   Router: {
-    file: "AppRoutes.ts",
+    file: "router.ts",
     lang: "ts",
     title: "Router",
     desc: "Defines the main routes and connects them with the corresponding controllers.",
-    code: `import { autoComposeRoutes } from '@gaman/core';
-import AppController from '../controllers/AppController';
+    code: `import { composeRouter } from 'gaman/compose';
+import AppController from './module/controllers/AppController';
 
-export default autoComposeRoutes((r) => {
+export default composeRouter((r) => {
   r.get('/', [AppController, 'HelloWorld']);
 });`,
   },
@@ -42,60 +42,58 @@ export default autoComposeRoutes((r) => {
     lang: "ts",
     title: "Controller",
     desc: "Handles business logic and communicates with services to process and return data.",
-    code: `import { composeController } from '@gaman/core';
-import { AppService, AppServiceType } from '../services/AppService.ts';
+    code: `import { composeController } from 'gaman/compose';
+import AppService from '../services/AppService';
+import type { RT } from 'gaman/types';
 
-export default composeController((
-  service: AppServiceType = AppService('GamanJS')) => ({
-
-  HelloWorld(ctx) {
-    return Res.json({ message: service.Welcome() });
-  },
-
-}));`,
+export default composeController(
+  (appService: RT<typeof AppService> = AppService()) => ({
+    HelloWorld(ctx) {
+      return Res.message(appService.WelcomeMessage());
+    },
+  }),
+);`,
   },
   Service: {
     file: "AppService.ts",
     lang: "ts",
     title: "Service",
     desc: "Contains reusable functions, core business logic, or external API/database calls.",
-    code: `import { composeService } from "@gaman/core";
+    code: `import { composeService } from 'gaman/compose';
 
-export const AppService = composeService((appName: string) => ({
-  Welcome() {
-    return '❤️ Welcome to ' + appName;
+export default composeService(() => ({
+  WelcomeMessage() {
+    return '❤️ Welcome to GamanJS';
   },
-}));
-
-export type AppServiceType = ReturnType<typeof AppService>;`,
+}));`,
   },
   Middleware: {
     file: "AppMiddleware.ts",
     lang: "ts",
     title: "Middleware",
-    desc: "Executes logic before and after a request is processed by the controller.",
-    code: `import { autoComposeMiddleware } from '@gaman/core';
+    desc: "Executes logic before a request is processed by the controller.",
+    code: `import { composeMiddleware } from 'gaman/compose';
 
-export default autoComposeMiddleware(async (ctx, next) => {
-  // todo:
-  return await next();
+export default composeMiddleware(async (ctx, next) => {
+  console.log(\`[\${ctx.request.method}] \${ctx.path}\`);
+  return next();
 });`,
   },
   ExceptionHandler: {
-    file: "AppException.ts",
+    file: "GlobalException.ts",
     lang: "ts",
     title: "Exception Handler",
-    desc: "Gaman has an exceptions handler, which can be called error handling, so it controls the existing error system. Its usage is quite simple",
-    code: `import { autoComposeExceptionHandler } from "@gaman/core";
-import { HttpException } from "@gaman/common";
+    desc: "GamanJS provides composeException for handling errors globally or per-route.",
+    code: `import { composeException } from 'gaman/compose';
 
-export default autoComposeExceptionHandler((err) => {
-    if(err instanceof HttpException){
-      return Res.json({
-        message: err.message
-      }, err.statusCode);
-    }
-});    `,
+export default composeException((error, ctx) => {
+  console.error(\`[Error] \${ctx.path}:\`, error.message);
+
+  return Res.send({
+    error: error.message,
+    path: ctx.path,
+  }).internalServerError();
+});`,
   }
 };
 

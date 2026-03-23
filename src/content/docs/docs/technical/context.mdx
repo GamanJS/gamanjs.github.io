@@ -1,266 +1,271 @@
 ---
-
 title: Context
-
-description: Context (`ctx`) adalah inti dari penanganan permintaan GamanJS. Objek ini menyediakan akses ke data permintaan, utilitas respons, dan status aplikasi. Setiap handler rute dan middleware menerima objek konteks sebagai parameter pertama.
-
+description: Every handler and middleware in GamanJS receives a ctx (Context) object containing all request information and utilities.
 ---
 
-## Overview
+Every handler and middleware in GamanJS receives a `ctx` (Context) object containing all request information and utilities for accessing data.
 
-The context object gives you everything you need to handle HTTP requests:
+## Core Properties
 
- ```ts
- (ctx) => {
-   const userId = ctx.param("id");
-   const name = await ctx.input("name");
-   ctx.cookies.set("lastVisit", new Date());
-   return Response.json({ userId, name });
- }
- ```
+### `ctx.path`
 
----
+URL pathname (without query string):
 
-## Request Information
+```ts
+// Request: GET /users/123?active=true
+ctx.path; // '/users/123'
+```
 
 ### `ctx.url`
 
-The `URL` object containing the full request URL with parsed components.
+Full `URL` instance:
 
- ```ts
- (ctx) => {
-   console.log(ctx.url.hostname); // "localhost"
-   console.log(ctx.url.pathname); // "/api/users"
-   console.log(ctx.url.search);   // "?page=1&limit=10"
- }
- ```
+```ts
+ctx.url.origin;   // 'http://localhost:3431'
+ctx.url.pathname; // '/users/123'
+ctx.url.search;   // '?active=true'
+```
 
 ### `ctx.request`
 
-The complete request object containing all HTTP request details including method, headers, and body parsing utilities.
+Raw request information:
 
- ```ts
- (ctx) => {
-   console.log(ctx.request.method);   // "POST"
-   console.log(ctx.request.pathname); // "/api/users"
-   console.log(ctx.request.ip);       // "127.0.0.1"
- }
- ```
-
----
-
-## Header
-
-### `ctx.headers`
-
-Access request headers through the `GamanHeaders` instance.
-
- ```ts
- (ctx) => {
-   const contentType = ctx.headers.get("content-type");
-   const userAgent = ctx.headers.get("user-agent");
- }
- ```
-
-### `ctx.header(key)`
-
-Get a specific header value by name (case-insensitive).
-
- ```ts
- (ctx) => {
-   const auth = ctx.header("authorization");
-   const accept = ctx.header("Accept");
- }
- ```
+```ts
+ctx.request.id;       // Unique request ID (auto-generated)
+ctx.request.method;   // 'GET', 'POST', etc
+ctx.request.url;      // Full URL as string
+ctx.request.pathname; // Pathname
+ctx.request.body();   // Promise<Buffer> — raw body
+```
 
 ---
 
-## Params
+## Route Parameters
 
 ### `ctx.param(name)`
 
-Get a single route parameter by name.
+Get a single route parameter:
 
- ```ts
- // Route: /users/:id
- (ctx) => {
-   const userId = ctx.param("id"); // "123"
- }
- ```
+```ts
+// Route: /users/:id
+r.get('/users/:id', (ctx) => {
+  const id = ctx.param('id'); // '123'
+  return Res.send({ id });
+});
+```
 
 ### `ctx.params`
 
-Get all route parameters as an object.
+All route parameters as an object:
 
- ```ts
- // Route: /posts/:postId/comments/:commentId
- (ctx) => {
-   const { postId, commentId } = ctx.params;
-   // { postId: "123", commentId: "456" }
- }
- ```
+```ts
+// Route: /posts/:postId/comments/:commentId
+ctx.params; // { postId: '1', commentId: '42' }
+```
 
 ---
 
-## Query
+## Query Parameters
 
 ### `ctx.query`
 
-Access URL query parameters. Supports access with function or object property.
+Access query parameters directly:
 
- ```ts
- // URL: /search?q=hello&page=2&tags=js&tags=web
- (ctx) => {
-   const search = ctx.query("q");        // "hello"
-   const page = ctx.query.page;          // "2"
-   const tags = ctx.query.tags;          // ["js", "web"]
- }
- ```
+```ts
+// Request: GET /search?q=gaman&page=2
+ctx.query.q;    // 'gaman'
+ctx.query.page; // '2'
+```
+
+For parameters with multiple values:
+
+```ts
+// Request: GET /filter?tag=js&tag=ts
+ctx.query.tag; // ['js', 'ts']
+```
 
 ---
 
-## Body
+## Request Body
 
-### `ctx.request.body()`
+### `ctx.json<T>()`
 
-in body this is raw data from everything data here type is buffer
+Parse body as JSON:
 
- ```ts
- (ctx) => {
-   const body = await ctx.request.body();
-   return Res.text(body.toString())
- }
- ```
+```ts
+async Create(ctx) {
+  const body = await ctx.json<{ name: string; email: string }>();
+  // body.name, body.email
+  return Res.send(body, 201);
+}
+```
 
 ### `ctx.text()`
 
-Read the request body as plain text.
+Read body as plain text:
 
- ```ts
- (ctx) => {
-   const textData = await ctx.text();
-   console.log(textData); // "Hello, world!"
- }
- ```
-
-### `ctx.json()`
-
-Parse the request body as JSON with optional type.
-
- ```ts
- (ctx) => {
-   const data = await ctx.json();
-   const user = await ctx.json<{ name: string; email: string }>();
- }
- ```
+```ts
+async Webhook(ctx) {
+  const raw = await ctx.text();
+  return Res.message('OK');
+}
+```
 
 ### `ctx.formData()`
 
-Parse form data from the request body.
+Parse body as FormData (multipart or URL-encoded):
 
- ```ts
- (ctx) => {
-   const form = await ctx.formData();
-   const name = form.get("name")?.asString();
-   const file = form.get("avatar")?.asFile();
- }
- ```
+```ts
+async Upload(ctx) {
+  const form = await ctx.formData();
+  const name = form.get('name');
+  // ...
+}
+```
+
+---
+
+## Form Shortcuts
 
 ### `ctx.input(name)`
 
-Get the value of a specific string form field directly.
+Get a single string value from form data:
 
- ```ts
- (ctx) => {
-   const username = await ctx.input("username");
-   const email = await ctx.input("email");
- }
- ```
+```ts
+const email = await ctx.input('email'); // string | null
+```
 
-### `ctx.intputs(name)`
+### `ctx.inputs(name)`
 
-get the value of an array field in a specific form directly.
+Get multiple string values from form data:
 
- ```ts
- (ctx) => {
-   const usernames = await ctx.inputs('usernames'); // string[]
- }
- ```
+```ts
+const tags = await ctx.inputs('tags'); // string[]
+```
 
 ### `ctx.file(name)`
 
-get the value of a file field in a specific form directly
+Get a single file from form data:
 
- ```ts
- (ctx) => {
-   const icon = await ctx.file('icon')
-   await icon.saveTo('/assets/icon.png')
- }
- ```
+```ts
+const avatar = await ctx.file('avatar'); // GFile | null
+
+if (avatar) {
+  avatar.name;     // original file name
+  avatar.type;     // MIME type
+  avatar.size;     // size in bytes
+  // ...
+}
+```
 
 ### `ctx.files(name)`
 
-get multiple files in a specific form directly
+Get multiple files from form data:
 
- ```ts
- (ctx) => {
-   const icons = await ctx.files('icons')
-   for(const icon of icons){
-     await icon.saveTo(`/assets/${icon.filename}`)
-   }
- }
- ```
+```ts
+const images = await ctx.files('images'); // GFile[]
+```
 
-## State
+---
 
-### `ctx.locals`
+## Headers
 
-Store and access request-scope data. Suitable for sharing data between middleware and route handlers.
+### `ctx.header(key)`
 
-here you can put function too
+Get a specific header value (case-insensitive):
 
- ```ts
- // In middleware
- (ctx, next) => {
-   ctx.locals.startTime = Date.now();
-   ctx.locals.user = { id: 1, name: "Angga" };
-   ctx.locals.createUser = (username: string) => {
-     // todo create
-   }
-   return next();
- }
- // In route handler
- (ctx) => {
-   const user = ctx.locals.user;
-   const duration = Date.now() - ctx.locals.startTime;
-   ctx.locals.createUser(ctx.params.username); // call function
- }
- ```
+```ts
+const token = ctx.header('Authorization'); // string | null
+const contentType = ctx.header('Content-Type');
+```
+
+### `ctx.headers`
+
+`GamanHeader` instance for reading and manipulating headers:
+
+```ts
+// Read
+ctx.headers.get('Content-Type');
+
+// Set response header
+ctx.headers.set('X-Custom-Header', 'value');
+```
+
+---
+
+## Cookies
+
+### `ctx.cookies`
+
+Bun's `CookieMap` instance for accessing cookies:
+
+```ts
+const session = ctx.cookies.get('session_id');
+```
+
+---
+
+## Data Store
+
+Middleware and handlers can share data via the context store:
 
 ### `ctx.set(key, value)`
 
-### `ctx.get(key)`
+```ts
+ctx.set('user', { id: 1, name: 'Angga' });
+```
+
+### `ctx.get<T>(key)`
+
+```ts
+const user = ctx.get<{ id: number; name: string }>('user');
+```
 
 ### `ctx.has(key)`
 
-ctx.set here is almost the same as locals but the difference is here you can't put function.
+```ts
+if (ctx.has('user')) {
+  // user was set by middleware
+}
+```
 
-the advantage here is without needing to set type in `index.d.ts`
+### `ctx.delete(key)`
 
- ```ts
- // in middleware
- (ctx, next) => {
-   ctx.set('username', ctx.params.username)
-   return next()
- }
- // in handler
- (ctx) => {
-   if(ctx.has('username')){
-     return Res.json({
-       message: 'ok!',
-       username: ctx.get('username')
-     })
-   }
-   return Res.json({message: "FAILED"}, {status: 404})
- }
- ```
+```ts
+ctx.delete('tempData');
+```
+
+---
+
+## Full Example
+
+```ts
+export default composeController(() => ({
+  async CreatePost(ctx) {
+    // Route params
+    const userId = ctx.param('userId');
+
+    // Query
+    const draft = ctx.query.draft === 'true';
+
+    // Body
+    const body = await ctx.json<{
+      title: string;
+      content: string;
+    }>();
+
+    // Headers
+    const token = ctx.header('Authorization');
+
+    // Data from middleware
+    const currentUser = ctx.get('user');
+
+    return Res.send({
+      userId,
+      draft,
+      title: body.title,
+      author: currentUser.name,
+    }, 201);
+  },
+}));
+```

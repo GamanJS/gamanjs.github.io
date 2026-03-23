@@ -1,177 +1,126 @@
 ---
 title: Services
+description: Services in GamanJS hold your business logic, created with composeService and independent from the HTTP layer.
 ---
 
-`composeService` is a **utility function** for creating service layers in **GamanJS**.  
-Services contain application business logic that is separated from controllers/handlers.
+Services in GamanJS hold your **business logic**. Created with `composeService`, services are independent from the HTTP layer — pure logic.
 
 ## Creating a Service
 
 ```ts
-// AppService.ts
-import { composeService } from "@gaman/core";
+// src/module/services/AppService.ts
+import { composeService } from 'gaman/compose';
 
-export const AppService = composeService((userId: number) => ({
-  Welcome() {
-    return `Welcome user ${userId}!`;
+export default composeService(() => ({
+  WelcomeMessage() {
+    return '❤️ Welcome to GamanJS';
   },
-  
-  async GetProfile() {
-    return await db.user.findUnique({ where: { id: userId } });
-  }
-}));
-
-export type AppServiceType = ReturnType<typeof AppService>;
-```
-
-### Service Parameters
-
-Parameters in `composeService` can be customized as needed:
-
-```ts
-// Single parameter
-composeService((id: number) => ({ /* ... */ }))
-
-// Multiple parameters
-composeService((id: number, token: string) => ({ /* ... */ }))
-
-// Object parameter
-composeService((config: { userId: number; secret: string }) => ({ /* ... */ }))
-
-// Without parameter
-composeService(() => ({ /* ... */ }))
-```
-
-## How to Use Service
-
-### 1. In Controller (Static Service)
-
-Inject service directly into controller with fixed parameters:
-
-```ts
-// UserController.ts
-import { composeController } from "@gaman/core";
-import { AppService, type AppServiceType } from "./AppService";
-
-export default composeController((service: AppServiceType = AppService(1)) => ({
-  CreateUser: async (ctx) => {
-    const profile = await service.GetProfile();
-    return Res.json({ message: "user created!", profile });
-  },
-  
-  UpdateUser: (ctx) => {
-    return Res.json({ message: "user updated!" });
-  },
-  
-  DeleteUser: (ctx) => {
-    return Res.json({ message: "user deleted!" });
-  }
 }));
 ```
 
-**Note:** If the service has parameters, pass the value when injecting: `AppService(userId)`
+`composeService` takes a factory function that returns an object containing logic methods.
 
-### 2. In Controller (Dynamic Service)
-
-Create a new service instance with dynamic parameters from the request:
+## Example: User Service
 
 ```ts
-// UserController.ts
-import { composeController } from "@gaman/core";
-import { AppService, type AppServiceType } from "./AppService";
+// src/module/services/UserService.ts
+import { composeService } from 'gaman/compose';
 
-export default composeController((service: AppServiceType = AppService(1)) => ({
-  CreateUser: async (ctx) => {
-    const profile = await service.GetProfile();
-    return Res.json({ message: "user created!", profile });
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+const users: User[] = [
+  { id: 1, name: 'Angga', email: 'angga@example.com' },
+  { id: 2, name: 'Budi', email: 'budi@example.com' },
+];
+
+export default composeService(() => ({
+  findAll(): User[] {
+    return users;
   },
-  
-  UpdateUser: (ctx) => {
-    // Dynamic service based on request parameters
-    const dynamicService = AppService(ctx.param("userId"));
-    const profile = await dynamicService.GetProfile();
-    return Res.json({ message: "user updated!", profile });
+
+  findById(id: number): User | undefined {
+    return users.find((u) => u.id === id);
   },
-  
-  DeleteUser: (ctx) => {
-    return Res.json({ message: "user deleted!" });
-  }
-}));
-```
 
-### 3. Directly in Route
-
-```ts
-// AppRoutes.ts
-import { AppService } from "./AppService";
-
-route.get("/profile/:id", async (ctx) => {
-  const userId = parseInt(ctx.params.id);
-  const service = AppService(userId);
-  
-  const profile = await service.GetProfile();
-  return Res.json(profile);
-});
-
-route.get("/welcome", (ctx) => {
-  const service = AppService(ctx.user.id);
-  return Res.json({ message: service.Welcome() });
-});
-```
-
-## Complete Example
-
-```ts
-// UserService.ts
-export const UserService = composeService((userId: number, token: string) => ({
-  async GetUser() {
-    return await db.user.findUnique({ 
-      where: { id: userId } 
-    });
+  create(data: Omit<User, 'id'>): User {
+    const newUser = { ...data, id: users.length + 1 };
+    users.push(newUser);
+    return newUser;
   },
-  
-  async UpdateUser(data: any) {
-    // Verify token
-    if (!this.verifyToken(token)) {
-      throw new Error("Invalid token");
-    }
-    
-    return await db.user.update({
-      where: { id: userId },
-      data
-    });
-  },
-  
-  verifyToken(token: string) {
-    // Token verification logic
+
+  delete(id: number): boolean {
+    const idx = users.findIndex((u) => u.id === id);
+    if (idx === -1) return false;
+    users.splice(idx, 1);
     return true;
-  }
+  },
 }));
-
-export type UserServiceType = ReturnType<typeof UserService>;
 ```
 
-Usage:
+## Service with Dependencies
+
+Services can also receive dependencies from other services:
 
 ```ts
-// In Controller
-export default composeController(
-  (service: UserServiceType = UserService(1, "secret-token")) => ({
-    GetProfile: async (ctx) => {
-      const user = await service.GetUser();
-      return Res.json(user);
-    }
-  })
-);
+// src/module/services/EmailService.ts
+import { composeService } from 'gaman/compose';
 
-// Or directly in Route
-route.get("/user/:id", async (ctx) => {
-  const service = UserService(
-    parseInt(ctx.params.id),
-    ctx.headers.authorization
-  );
-  
-  const user = await service.GetUser();
-  return Res.json(user);
-});
+export default composeService(() => ({
+  sendWelcome(email: string) {
+    console.log(`Sending welcome email to ${email}`);
+  },
+
+  sendResetPassword(email: string, token: string) {
+    console.log(`Sending reset password email to ${email}`);
+  },
+}));
 ```
+
+```ts
+// src/module/services/AuthService.ts
+import { composeService } from 'gaman/compose';
+import type { RT } from 'gaman/types';
+import EmailService from './EmailService';
+
+export default composeService(
+  (emailService: RT<typeof EmailService> = EmailService()) => ({
+    register(name: string, email: string) {
+      // ... register logic
+      emailService.sendWelcome(email);
+      return { name, email };
+    },
+
+    resetPassword(email: string) {
+      const token = crypto.randomUUID();
+      emailService.sendResetPassword(email, token);
+    },
+  }),
+);
+```
+
+## Using in a Controller
+
+```ts
+import { composeController } from 'gaman/compose';
+import UserService from '../services/UserService';
+import type { RT } from 'gaman/types';
+
+export default composeController(
+  (userService: RT<typeof UserService> = UserService()) => ({
+    GetAll(ctx) {
+      return Res.send(userService.findAll());
+    },
+  }),
+);
+```
+
+## Tips
+
+- Services do **not** have access to `ctx` — this is intentional so logic stays independent from HTTP
+- One service can be used by multiple controllers
+- Services can depend on each other
+- Separation of concerns: Service = business logic, Controller = HTTP handling

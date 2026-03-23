@@ -1,160 +1,126 @@
 ---
 title: Services
+description: Service di GamanJS adalah tempat untuk business logic aplikasi, dibuat dengan composeService dan tidak bergantung pada HTTP layer.
 ---
 
-`composeService` adalah **utility function** untuk membuat service layer di **GamanJS**.  
-Service berisi business logic aplikasi yang terpisah dari controller/handler.
+Service di GamanJS adalah tempat untuk **business logic** aplikasi. Service dibuat dengan `composeService` dan tidak bergantung pada HTTP layer — murni logic.
 
 ## Membuat Service
 
 ```ts
-// AppService.ts
-import { composeService } from "@gaman/core";
+// src/module/services/AppService.ts
+import { composeService } from 'gaman/compose';
 
-export const AppService = composeService((userId: number) => ({
-  Welcome() {
-    return `Welcome user ${userId}!`;
-  },
-  
-  async GetProfile() {
-    return await db.user.findUnique({ where: { id: userId } });
-  }
-}));
-
-export type AppServiceType = ReturnType<typeof AppService>;
-```
-
-### Parameter Service
-
-Parameter di `composeService` bisa di-custom sesuai kebutuhan:
-
-```ts
-// Single parameter
-composeService((id: number) => ({ /* ... */ }))
-
-// Multiple parameters
-composeService((id: number, token: string) => ({ /* ... */ }))
-
-// Object parameter
-composeService((config: { userId: number; secret: string }) => ({ /* ... */ }))
-
-// Tanpa parameter
-composeService(() => ({ /* ... */ }))
-```
-
-## Cara Menggunakan Service
-
-### 1. Di Controller (Static Service)
-
-Inject service langsung ke controller dengan parameter tetap:
-
-```ts
-// UserController.ts
-import { composeController } from "@gaman/core";
-import { AppService, type AppServiceType } from "./AppService";
-
-export default composeController((service: AppServiceType = AppService()) => ({
-  CreateUser: async (ctx) => {
-    const profile = await service.GetProfile();
-    return Res.json({ message: "user created!", profile });
+export default composeService(() => ({
+  WelcomeMessage() {
+    return '❤️ Welcome to GamanJS';
   },
 }));
 ```
 
-**Note:** Jika service memiliki parameter, masukkan nilainya saat inject: `AppService(userId)`
+`composeService` menerima factory function yang mengembalikan object berisi method-method logic.
 
-### 2. Di Controller (Dynamic Service)
-
-Buat service instance baru dengan parameter dinamis dari request:
+## Contoh: User Service
 
 ```ts
-// UserController.ts
-import { composeController } from "@gaman/core";
-import { AppService } from "./AppService";
+// src/module/services/UserService.ts
+import { composeService } from 'gaman/compose';
 
-export default composeController(() => ({
-  UpdateUser: (ctx) => {
-    // Service dinamis berdasarkan parameter dari request
-    const dynamicService = AppService(ctx.param("userId"));
-    const profile = await dynamicService.GetProfile();
-    return Res.json({ message: "user updated!", profile });
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+const users: User[] = [
+  { id: 1, name: 'Angga', email: 'angga@example.com' },
+  { id: 2, name: 'Budi', email: 'budi@example.com' },
+];
+
+export default composeService(() => ({
+  findAll(): User[] {
+    return users;
   },
-}));
-```
 
-### 3. Langsung di Route
-
-```ts
-// AppRoutes.ts
-import { AppService } from "./AppService";
-
-route.get("/profile/:id", async (ctx) => {
-  const userId = parseInt(ctx.params.id);
-  const service = AppService(userId);
-  
-  const profile = await service.GetProfile();
-  return Res.json(profile);
-});
-
-route.get("/welcome", (ctx) => {
-  const service = AppService(ctx.user.id);
-  return Res.json({ message: service.Welcome() });
-});
-```
-
-## Contoh Lengkap
-
-```ts
-// UserService.ts
-export const UserService = composeService((userId: number, token: string) => ({
-  async GetUser() {
-    return await db.user.findUnique({ 
-      where: { id: userId } 
-    });
+  findById(id: number): User | undefined {
+    return users.find((u) => u.id === id);
   },
-  
-  async UpdateUser(data: any) {
-    // Verifikasi token
-    if (!this.verifyToken(token)) {
-      throw new Error("Invalid token");
-    }
-    
-    return await db.user.update({
-      where: { id: userId },
-      data
-    });
+
+  create(data: Omit<User, 'id'>): User {
+    const newUser = { ...data, id: users.length + 1 };
+    users.push(newUser);
+    return newUser;
   },
-  
-  verifyToken(token: string) {
-    // Logic verifikasi token
+
+  delete(id: number): boolean {
+    const idx = users.findIndex((u) => u.id === id);
+    if (idx === -1) return false;
+    users.splice(idx, 1);
     return true;
-  }
+  },
 }));
-
-export type UserServiceType = ReturnType<typeof UserService>;
 ```
 
-Penggunaan:
+## Service dengan Dependency
+
+Service juga bisa menerima dependency dari service lain:
 
 ```ts
-// Di Controller
-export default composeController(
-  (service: UserServiceType = UserService(1, "secret-token")) => ({
-    GetProfile: async (ctx) => {
-      const user = await service.GetUser();
-      return Res.json(user);
-    }
-  })
-);
+// src/module/services/EmailService.ts
+import { composeService } from 'gaman/compose';
 
-// Atau langsung di Route
-route.get("/user/:id", async (ctx) => {
-  const service = UserService(
-    parseInt(ctx.params.id),
-    ctx.headers.authorization
-  );
-  
-  const user = await service.GetUser();
-  return Res.json(user);
-});
+export default composeService(() => ({
+  sendWelcome(email: string) {
+    console.log(`Sending welcome email to ${email}`);
+  },
+
+  sendResetPassword(email: string, token: string) {
+    console.log(`Sending reset password email to ${email}`);
+  },
+}));
 ```
+
+```ts
+// src/module/services/AuthService.ts
+import { composeService } from 'gaman/compose';
+import type { RT } from 'gaman/types';
+import EmailService from './EmailService';
+
+export default composeService(
+  (emailService: RT<typeof EmailService> = EmailService()) => ({
+    register(name: string, email: string) {
+      // ... register logic
+      emailService.sendWelcome(email);
+      return { name, email };
+    },
+
+    resetPassword(email: string) {
+      const token = crypto.randomUUID();
+      emailService.sendResetPassword(email, token);
+    },
+  }),
+);
+```
+
+## Menggunakan di Controller
+
+```ts
+import { composeController } from 'gaman/compose';
+import UserService from '../services/UserService';
+import type { RT } from 'gaman/types';
+
+export default composeController(
+  (userService: RT<typeof UserService> = UserService()) => ({
+    GetAll(ctx) {
+      return Res.send(userService.findAll());
+    },
+  }),
+);
+```
+
+## Tips
+
+- Service **tidak** memiliki akses ke `ctx` — ini disengaja agar logic tidak bergantung pada HTTP
+- Satu service bisa dipakai oleh banyak controller
+- Service bisa saling bergantung satu sama lain
+- Pisahkan concern: Service = business logic, Controller = HTTP handling

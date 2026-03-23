@@ -1,60 +1,63 @@
 ---
-
-title: First Steps
-description: GamanJS is a modular and efficient backend framework designed for simplicity and performance. Follow the steps below to quickly get started with your first GamanJS project.
-
+title: Getting Started
+description: Get started with GamanJS — a fast HTTP framework built on Bun runtime for building structured REST APIs.
 ---
 
-### Language
+## Requirements
 
-GamanJS is specifically designed to work with ***TypeScript*** and modern ***JavaScript*** using the ***ECMAScript (ESM)*** module system. This means all modules must be written using **import** and **export** syntax; CommonJS (require, module.exports) is not supported. If you are building a project with GamanJS, ensure your environment and codebase are fully compatible with **ESM**.
+- [Bun](https://bun.sh) `v1.0+`
 
-### Prerequisites
+## Create a New Project
 
-Please ensure `Node.js` (version >= 20.x) is installed on your operating system.
+```bash
+bun create gaman@latest
+```
 
----
+This will generate a new project with the following structure:
 
-## Create your first project
+```
+my-app/
+├── src/
+│   ├── index.ts                      # Entry point & bootstrap
+│   ├── router.ts                     # Route definitions
+│   └── module/
+│       ├── controllers/
+│       │   └── AppController.ts      # Example controller
+│       ├── services/
+│       │   └── AppService.ts         # Example service
+│       └── middlewares/
+│           └── AppMiddleware.ts      # Example middleware
+├── package.json
+└── tsconfig.json
+```
 
-import { PackageManagers } from "starlight-package-managers";
+## Manual Installation
 
-GamanJS is a framework for backend applications, you can create it using your favorite package manager:
+If you want to add GamanJS to an existing project:
 
-<PackageManagers
+```bash
+bun add gaman @gaman/michi
+```
 
-  pkg="gaman@latest"
+## Running the Server
 
-  pkgManagers={["npm", "pnpm", "yarn", "bun"]}
+```bash
+bun run src/index.ts
+```
 
-  type="create"
+Output:
 
- />
+```
+GamanJS Framework v2
+A Lean Framework for Heavy-Duty Enterprise Performance.
+ ──────────────────────────────────────
+HTTP  : Listening at http://localhost:3431
+ ──────────────────────────────────────
+Orchestration complete. Ready for requests.
+```
 
-## Project Structure
+## What's Next
 
-import { FileTree } from "@astrojs/starlight/components";
-
-After creating a new project, your file structure will look like this:
-
-<FileTree>
-
-- src
-
-  - controllers
-
-    - AppController.ts
-
-  - routes
-
-    - AppRoutes.ts
-
-  - index.d.ts
-
-  - index.ts
-
-- package.json
-
-- tsconfig.json
-
-</FileTree>
+- [Bootstrap](/docs/overview/bootstrap) — Configuration and starting the server
+- [Router](/docs/overview/routing) — Defining routes
+- [Controller](/docs/overview/controllers) — Separating handler logic

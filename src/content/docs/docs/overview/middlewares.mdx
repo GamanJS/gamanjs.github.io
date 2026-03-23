@@ -1,167 +1,181 @@
 ---
-
 title: Middlewares
-
-description: Middleware in GamanJS provides a powerful way to process requests before they reach the route handler. Middleware can be defined globally for all routes in a Block or scoped to specific paths and HTTP methods. Middleware functions are designed to continue to the next handler when they do not return a response.
-
+description: Middleware in GamanJS runs before the route handler for checks, context modification, or request blocking.
 ---
 
-Normally, **Gaman Middleware** is located in the `src/middlewares/**` folder, so if you use `autoComposeMiddleware((ctx, next) => next())` it will be automatically registered by the system.
+Middleware in GamanJS runs **before** the route handler and can perform checks, modify context, or stop the request before it reaches the controller.
 
-![workflow middleware](/img/workflow/middleware.png)
+## Creating Middleware
 
-Middleware here acts as a guard for the request system, middleware will be executed first when a request comes in, so before `interceptor` then `handler`, `middleware` will be executed first.
+```ts
+// src/module/middlewares/AppMiddleware.ts
+import { composeMiddleware } from 'gaman/compose';
 
-## Middleware Definition
+export default composeMiddleware(async (ctx, next) => {
+  // Logic before handler
+  console.log(`[${ctx.request.method}] ${ctx.path}`);
 
-### `composeMiddleware()`
+  // Continue to next handler/middleware
+  return next();
+});
+```
 
-Here we use `composeMiddleware` which means it will not be automatically registered to the `middlewares` data, so you have to manually register it to `index.ts`
+`composeMiddleware` returns a **factory function** — it must be called with `()` when registered.
 
- ```ts
- // AppMiddleware.ts
- import { composeMiddleware } from "@gaman/core"
+### Stopping a Request
 
- export default composeMiddleware((ctx, next) => {
-   return next();
- });
- ```
+If middleware needs to stop the request (e.g., auth failure), **don't call `next()`**, return `Res` directly:
 
-After that, you have to manually register it to the `src/index.ts` file
+```ts
+import { composeMiddleware } from 'gaman/compose';
 
- ```ts
- // index.ts
- import { AppMiddleware } from "./middlewares/AppMiddleware.ts"
- import { AuthMiddleware } from "./middlewares/AuthMiddleware.ts"
+export default composeMiddleware(async (ctx, next) => {
+  const token = ctx.header('Authorization');
 
- defineBootstrap((app) => {
-   app.mount(AppMiddleware());
- })
- ```
+  if (!token) {
+    return Res.message('Unauthorized').unauthorized();
+  }
 
-Or it can be registered to a specific router, here is the example:
+  // Token valid, continue
+  return next();
+});
+```
 
- ```ts
- // AppRoutes.ts
- import { AppMiddleware } from "./middlewares/AppMiddleware.ts"
- import { AuthMiddleware } from "./middlewares/AuthMiddleware.ts"
+## Global Middleware
 
- export default autoComposeRoutes((route) => {
-   route
-     .get('/generate-token', Handler)
-     .middleware(AppMiddleware()) // single middleware
-     .middleware([AppMiddleware(), AuthMiddleware()]) // multi middleware
+Register in `defineBootstrap` via `app.mount()`:
 
-   route.group('/user', (route) => {
-     route.post('/create', Handler)
-     route.get('/profile', Handler)
-   }).middleware(AppMiddleware()) // single middleware
-     .middleware([AppMiddleware(), AuthMiddleware()]) // multi middleware
- })
- ```
+```ts
+import { defineBootstrap } from 'gaman';
+import router from './router';
+import LogMiddleware from './module/middlewares/LogMiddleware';
 
-If you put middleware in a group, the routes inside will also be affected.
+defineBootstrap(async (app) => {
+  // Global middleware — runs on ALL routes
+  app.mount(LogMiddleware());
 
-### `autoComposeMiddleware()`
+  app.mount(router);
+  app.mountServer({ http: 3431 });
+});
+```
 
-Here we use `autoComposeMiddleware` which means it will be automatically registered to the `middlewares` data, with the requirement that it must be in the `src/middlewares/**` folder.
+## Per-Route Middleware
 
- ```ts
- // AppMiddleware.ts
- import { autoComposeMiddleware } from "@gaman/core"
+Register directly on route definitions:
 
- export default autoComposeMiddleware((ctx, next) => {
-   return next();
- })
- ```
+```ts
+import { composeRouter } from 'gaman/compose';
+import AuthMiddleware from './module/middlewares/AuthMiddleware';
+import UserController from './module/controllers/UserController';
 
-This will be automatically registered into the `middlewares` data, so you don't need to register manually.
+export default composeRouter((r) => {
+  r.get('/profile', [UserController, 'Profile'])
+    .middleware(AuthMiddleware());
+});
+```
 
-## Middleware Config
+## Group Middleware
 
-Here Gaman has prepared default middleware config that you can use.
+Applied to all routes in the group:
 
-### Priority
+```ts
+r.group('/admin', (admin) => {
+  admin.get('/dashboard', [AdminController, 'Dashboard']);
+  admin.get('/settings', [AdminController, 'Settings']);
+}).middleware(AuthMiddleware());
+```
 
-`priority` is a very useful config, the higher the priority, the earlier the process will be executed than others.
+## Priority System
 
- ```ts
- import { Priority } from "@gaman/common"
+Middleware has a **priority** that controls execution order. Lower values (higher priority) run first.
 
- export default composeMiddleware((ctx, next) => {
-   return next();
- }, {
-   priority: Priority.NORMAL
- })
- ```
+```ts
+import { Priority } from 'gaman/utils';
+```
 
-### Includes
+| Priority | Value | Description |
+|----------|-------|-------------|
+| `MONITOR` | `0` | Runs first, for logging/monitoring |
+| `VERY_HIGH` | `1` | Very high priority |
+| `HIGH` | `2` | High priority |
+| `NORMAL` | `3` | Default |
+| `LOW` | `4` | Low priority |
+| `VERY_LOW` | `5` | Runs last |
 
-`includes` here functions to filter which route or path to run the middleware.
+### Default Config
 
- ```ts
- export default composeMiddleware((ctx, next) => {
-   return next()
- }, {
-   includes: [
-     {
-       path: '/user{/*splat}' // means path /user and after will be affected by middleware
-     },
-     {
-       path: '/blog/*splat' // means after path /blog/ will be middleware except path /blog itself
-       method: ['GET', "POST"] // so only GET and POST methods
-     },
-     "/dashboard" // path /dashboard will be affected by middleware
-   ]
- })
- ```
+```ts
+export default composeMiddleware(
+  async (ctx, next) => {
+    return next();
+  },
+  { priority: Priority.NORMAL }, // default config
+);
+```
 
-### Excludes
+### Override When Using
 
-`excludes` here functions to filter which route or path will not run the middleware.
+```ts
+app.mount(LogMiddleware({ priority: Priority.MONITOR }));
+app.mount(AuthMiddleware({ priority: Priority.HIGH }));
+```
 
- ```ts
- export default composeMiddleware((ctx, next) => {
-   return next()
- }, {
-   excludes: [
-     {
-       path: '/profile{/*splat}' // means path /profile and after will not be affected by middleware
-     },
-     {
-       path: '/setting/*splat' // means after path /setting/ will not be middleware except path /setting itself
-       method: ['GET', "POST"]
-     },
-     "/" // root path will not be affected by middleware
-   ]
- })
- ```
+### Custom Config
 
-:::tip[path-to-regexp]
+Middleware can accept custom configuration:
 
-We use the `path-to-regexp` library to manipulate the path URL, so if you want more information about path and other experiments, you can visit the following repository ["path-to-regexp"](https://github.com/pillarjs/path-to-regexp)
+```ts
+import { composeMiddleware } from 'gaman/compose';
 
-:::
+type CorsConfig = {
+  origin: string;
+  methods: string[];
+};
 
-Middleware config can also be set when registering to the route, but only `composeMiddleware` not with `autoComposeMiddleware` because it's already automatic global middleware.
+export default composeMiddleware<CorsConfig>(
+  async (ctx, next) => {
+    ctx.headers.set('Access-Control-Allow-Origin', '*');
+    return next();
+  },
+  {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    priority: Priority.VERY_HIGH,
+  },
+);
+```
 
-Example:
+Usage:
 
- ```ts
- // index.ts
- defineBootstrap((app) => {
-   app.mount(AppMiddleware({
-     priority: Priority.HIGH,
-     includes: ['/dashboard']
-   }))
- })
+```ts
+app.mount(CorsMiddleware({ origin: 'https://example.com' }));
+```
 
- // AppRoutes.ts
- composeRoutes((route) => {
-   route.get('/', Handler).middleware(AppMiddleware({
-     excludes: [{
-       path: '/api/*splat'
-     }]
-   }))
- })
- ```
+## Storing Data in Context
+
+Middleware can store data accessible by handlers:
+
+```ts
+export default composeMiddleware(async (ctx, next) => {
+  const user = await verifyToken(ctx.header('Authorization'));
+  ctx.set('user', user);   // Store in context
+  return next();
+});
+```
+
+Access in controller:
+
+```ts
+GetProfile(ctx) {
+  const user = ctx.get('user');  // Retrieve from context
+  return Res.send(user);
+}
+```
+
+## Execution Pipeline
+
+Middleware pipeline order:
+
+```
+Request → Global Middlewares (sorted by priority) → Route Middlewares → Handler → Response
+```

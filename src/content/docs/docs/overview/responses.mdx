@@ -1,320 +1,285 @@
 ---
-
 title: Responses
+description: GamanJS provides a global Res (Responder class) to create consistent and standardized API responses.
+---
 
-description: GamanJS menyediakan sistem Response yang fleksibel untuk menangani respons HTTP. Anda dapat mengembalikan respons menggunakan kelas `Res` atau shortcut praktis yang secara otomatis menentukan tipe respons.
+GamanJS provides a global `Res` (alias for the `Responder` class) to create **consistent and standardized** responses. The goal is for all API responses from your application to have the same format — no more inconsistent response formats across endpoints.
+
+## Standard Response Format
+
+All responses created via `Res.send()` / `Res.message()` / `Res.error()` produce a consistent JSON format:
+
+```json
+{
+  "success": true,
+  "message": "Success",
+  "data": { ... },
+  "metadata": {
+    "requestId": "abc123...",
+    "timestamp": "2026-03-23T07:00:00.000Z"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | `boolean` | `true` if status 2xx, `false` otherwise |
+| `message` | `string` | Response message (auto-set based on status code, or custom) |
+| `data` | `any` | Response data (optional) |
+| `errors` | `Record<string, string[]>` | Validation errors (optional) |
+| `metadata` | `object` | Request ID & timestamp, plus custom metadata |
 
 ---
 
-**Gaman Response** here we use the `Res` function, you don't need to import it first because the `Res` function here is already a `global` function so you can use it anywhere.
+## Static Factory Methods
 
-## Overview
+### `Res.send(data, options?)` ⭐ **Primary**
 
-Import the Response class and use it in your route handler:
+The primary method for sending responses with data. **This is the most commonly used.**
 
- ```ts
- (ctx) => {
-   return Res.json({ message: "Hello World" }, { status: 200 });
- };
- ```
+```ts
+// Send data with status 200 (default)
+return Res.send({ name: 'Angga', age: 25 });
 
-FYI: Response status can be shorthand like this
+// Send data with custom status
+return Res.send(users, 201);
 
- ```ts
- (ctx) => {
-   return Res.json({ message: "Bad Request" }, 403); // directly enter status number
- };
- ```
+// Send data with full options
+return Res.send(users, {
+  status: 200,
+  message: 'Users retrieved successfully',
+});
+```
+
+Output:
+
+```json
+{
+  "success": true,
+  "message": "Success",
+  "data": { "name": "Angga", "age": 25 },
+  "metadata": {
+    "requestId": "...",
+    "timestamp": "..."
+  }
+}
+```
+
+### `Res.message(msg, options?)`
+
+Send a response with only a message (no data):
+
+```ts
+return Res.message('Welcome to GamanJS');
+return Res.message('User created successfully', 201);
+```
+
+Output:
+
+```json
+{
+  "success": true,
+  "message": "Welcome to GamanJS",
+  "metadata": { ... }
+}
+```
+
+### `Res.error(errors, options?)`
+
+Send an error response with validation error details:
+
+```ts
+return Res.error({
+  email: ['Email is required', 'Invalid email format'],
+  password: ['Password must be at least 8 characters'],
+}, 422);
+```
+
+Output:
+
+```json
+{
+  "success": false,
+  "message": "Unprocessable Entity",
+  "errors": {
+    "email": ["Email is required", "Invalid email format"],
+    "password": ["Password must be at least 8 characters"]
+  },
+  "metadata": { ... }
+}
+```
+
+### `Res.ok(data)`
+
+Shortcut for `Res.send(data)` with status `200`:
+
+```ts
+return Res.ok(users);
+```
+
+### `Res.notFound(data?)`
+
+Shortcut for `404` response:
+
+```ts
+return Res.notFound();
+```
 
 ---
 
-## Response Methods
+## Raw Response Methods
 
-### `Res.json(data, init?)`
+Methods for sending responses **without** the standard format (raw body):
 
-Returns a JSON response with `Content-Type: application/json`.
+### `Res.json(data, options?)`
 
- ```ts
- (ctx) => {
-   return Res.json({
-     user: { id: 1, name: "Angga" },
-     status: "success",
-   });
- };
- ```
+Send raw JSON (without `success`, `message` wrapper, etc):
 
-// With custom options
+```ts
+return Res.json({ custom: 'format' });
+```
 
- ```ts
- (ctx) => {
-   return Res.json(
-     { error: "Not found" },
-     { status: 404, headers: { "X-Custom": "value" } }
-   );
- };
- ```
+### `Res.text(message, options?)`
 
-### `Res.text(message, init?)`
+Send plain text:
 
-Returns a plain text response with `Content-Type: text/plain`.
+```ts
+return Res.text('Hello World');
+```
 
- ```ts
- (ctx) => {
-   return Res.text("Hello, World!");
- };
- ```
+### `Res.html(body, options?)`
 
-// With custom status
+Send HTML:
 
- ```ts
- (ctx) => {
-   return Res.text("Server Error", { status: 500 });
- };
- ```
+```ts
+return Res.html('<h1>Hello World</h1>');
+```
 
-### `Res.html(body, init?)`
+### `Res.stream(readableStream, options?)`
 
-Returns an HTML response with `Content-Type: text/html`.
+Send stream response:
 
- ```ts
- (ctx) => {
-   return Res.html(`
-     <html>
-       <body>
-         <h1>Welcome</h1>
-         <p>Hello from GamanJS!</p>
-       </body>
-     </html>
-   `);
- };
- ```
+```ts
+const file = Bun.file('./large-video.mp4');
+return Res.stream(file.stream());
+```
 
-// With custom header
+### `Res.render(viewName, viewData?, options?)`
 
- ```ts
- (ctx) => {
-   return Res.html("<h1>Custom Page</h1>", {
-     status: 201,
-     headers: { "X-Frame-Options": "DENY" },
-   });
- };
- ```
+Send HTML response from a view template:
 
-### `Res.render(viewName, data?, init?)`
-
-Renders a template using the configured view engine. Requires view engine integration setup first.
-
- ```ts
- (ctx) => {
-   return Res.render("home", {
-     title: "Welcome",
-     user: { name: "Angga" },
-   });
- };
- ```
-
-// With custom status
-
- ```ts
- (ctx) => {
-   return Res.render("error", { message: "Page not found" }, { status: 404 });
- };
- ```
-
-### `Res.stream(stream, init?)`
-
-Returns a streaming response with `Content-Type: application/octet-stream`.
-
- ```ts
- import { createReadStream } from "fs";
-
- (ctx) => {
-   const fileStream = createReadStream("./large-file.pdf");
-   return Res.stream(fileStream);
- };
- ```
-
-// With custom content type
-
- ```ts
- (ctx) => {
-   const videoStream = createReadStream("./video.mp4");
-   return Res.stream(videoStream, {
-     headers: { "Content-Type": "video/mp4" },
-   });
- };
- ```
+```ts
+return Res.render('home', { title: 'Welcome' });
+```
 
 ### `Res.redirect(location, status?)`
 
-Returns a redirect response. Default status is 302 (temporary redirect).
+Redirect response:
 
- ```ts
- (ctx) => {
-   return Res.redirect("/login");
- };
- ```
-
-// Permanent redirect (301)
-
- ```ts
- (ctx) => {
-   return Res.redirect("/new-url", 301);
- };
- ```
-
-// Temporary redirect (302) - explicit
-
- ```ts
- (ctx) => {
-   return Res.redirect("/dashboard", 302);
- };
- ```
-
-## Shorthand Response
-
-### `Res.ok(body)`
-
-Shortcut method to resolve the request with status code `200`.
-
- ```ts
- ctx => {
-   return Res.ok({ message: "OK" })
- }
- ```
-
-### `Res.created(body?)`
-
-Shortcut method to resolve the request with status code `201`.
-
- ```ts
- ctx => {
-   return Res.created({ message: "Created" })
- }
- ```
-
-### `Res.accepted(body)`
-
-Shortcut method to resolve the request with status code `202`.
-
- ```ts
- ctx => {
-   return Res.accepted({ message: "Accepted" })
- }
- ```
-
-### `Res.nonAuthoritativeInformation(body)`
-
-Shortcut method to resolve the request with status code `203`.
-
- ```ts
- ctx => {
-   return Res.nonAuthoritativeInformation({ message: "Non Authoritative Information" })
- }
- ```
-
-### `Res.noContent()`
-
-Shortcut method to resolve the request with status code `204` without content.
-
- ```ts
- ctx => {
-   return Res.noContent()
- }
- ```
-
-### `Res.resetContent()`
-
-Shortcut method to resolve the request with status code `205` without content.
-
- ```ts
- ctx => {
-   return Res.resetContent()
- }
- ```
-
-### `Res.partialContent(body)`
-
-Shortcut method to resolve the request with status code `206`.
-
- ```ts
- ctx => {
-   return Res.partialContent({ message: "Partial Content" })
- }
- ```
-
-### `Res.multipleChoices(body?)`
-
-Shortcut method to resolve the request with status code `300`.
-
- ```ts
- ctx => {
-   return Res.multipleChoices({ message: "Multiple Choices" })
- }
- ```
-
-### `Res.movedPermanently(body?)`
-
-Shortcut method to resolve the request with status code `301`.
-
- ```ts
- ctx => {
-   return Res.movedPermanently({ message: "Moved Permanently" })
- }
- ```
-
-### `Res.movedTemporarily(body?)`
-
-Shortcut method to resolve the request with status code `302`.
-
- ```ts
- ctx => {
-   return Res.movedTemporarily({ message: "Moved Temporarily" })
- }
- ```
-
-### `Res.seeOther(body?)`
-
-Shortcut method to resolve the request with status code `303`.
-
- ```ts
- ctx => {
-   return Res.seeOther({ message: "See Other" })
- }
- ```
-
-### `Res.notModified(body?)`
-
-Shortcut method to resolve the request with status code `304`.
-
- ```ts
- ctx => {
-   return Res.notModified({ message: "Not Modified" })
- }
- ```
-
-### `Res.useProxy(body?)`
-
-Shortcut method to resolve the request with status code `305`.
-
- ```ts
- ctx => {
-   return Res.useProxy({ message: "Use Proxy" })
- }
- ```
-
-### `Res.temporaryRedirect(body?)`
-
-Shortcut method to resolve the request with status code `307`.
-
- ```ts
- ctx => {
-   return Res.temporaryRedirect({ message: "Temporary Redirect" })
- }
- ```
+```ts
+return Res.redirect('/dashboard');      // 302
+return Res.redirect('/new-url', 301);   // 301
+```
 
 ---
 
-*(can be continued for all 4xx and 5xx codes with the same format)*
+## Fluent API (Method Chaining)
 
-> The GamanJS Response system provides convenience and flexibility, allowing you to choose between explicit response methods and automatic shortcuts according to your needs.
+All `Responder` instances support chaining:
+
+```ts
+return Res.send(data)
+  .status(201)
+  .message('User created')
+  .meta({ page: 1, total: 100 })
+  .header('X-Custom', 'value');
+```
+
+### Chaining Methods
+
+| Method | Description |
+|--------|-------------|
+| `.message(msg)` | Set custom message |
+| `.status(code)` | Set HTTP status code |
+| `.statusText(text)` | Set status text |
+| `.meta(data)` | Add custom metadata |
+| `.header(key, value)` | Add response header |
+| `.error(errors, msg?)` | Set validation errors |
+
+---
+
+## Status Shortcuts
+
+Shortcut methods for setting status codes:
+
+```ts
+return Res.send(data).ok();                 // 200
+return Res.send(data).created();            // 201
+return Res.send(data).accepted();           // 202
+return Res.send(data).noContent();          // 204
+return Res.send(data).badRequest();         // 400
+return Res.send(data).unauthorized();       // 401
+return Res.send(data).forbidden();          // 403
+return Res.send(data).notFound();           // 404
+return Res.send(data).methodNotAllowed();   // 405
+return Res.send(data).tooManyRequests();    // 429
+return Res.send(data).internalServerError();// 500
+```
+
+### Redirect Shortcuts
+
+```ts
+return Res.send(null).movedPermanently('/new-url');  // 301
+return Res.send(null).movedTemporarily('/temp-url');  // 302
+```
+
+---
+
+## Full Example
+
+```ts
+import { composeController } from 'gaman/compose';
+import UserService from '../services/UserService';
+import type { RT } from 'gaman/types';
+
+export default composeController(
+  (userService: RT<typeof UserService> = UserService()) => ({
+    // GET /users
+    GetAll(ctx) {
+      const users = userService.findAll();
+      return Res.send(users).meta({ total: users.length });
+    },
+
+    // GET /users/:id
+    GetById(ctx) {
+      const user = userService.findById(ctx.param('id'));
+      if (!user) return Res.message('User not found').notFound();
+      return Res.send(user);
+    },
+
+    // POST /users
+    async Create(ctx) {
+      const body = await ctx.json();
+
+      if (!body.email) {
+        return Res.error({ email: ['Email is required'] }, 422);
+      }
+
+      const user = userService.create(body);
+      return Res.send(user, { status: 201, message: 'User created' });
+    },
+
+    // DELETE /users/:id
+    Delete(ctx) {
+      userService.delete(ctx.param('id'));
+      return Res.send(null).noContent(); // 204 No Content
+    },
+  }),
+);
+```
+
+## Why Use `Res.send()`?
+
+> **Problem:** Most developers create API responses with different formats across endpoints. Some use `{ data: ... }`, `{ result: ... }`, `{ status: 'ok' }`, etc.
+>
+> **Solution:** GamanJS enforces consistent response formatting through `Res`. All responses automatically have `success`, `message`, `data`, `errors`, and `metadata`.
