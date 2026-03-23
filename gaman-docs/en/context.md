@@ -1,0 +1,268 @@
+# Context (`ctx`)
+
+Every handler and middleware in GamanJS receives a `ctx` (Context) object containing all request information and utilities for accessing data.
+
+## Core Properties
+
+### `ctx.path`
+
+URL pathname (without query string):
+
+```ts
+// Request: GET /users/123?active=true
+ctx.path; // '/users/123'
+```
+
+### `ctx.url`
+
+Full `URL` instance:
+
+```ts
+ctx.url.origin;   // 'http://localhost:3431'
+ctx.url.pathname; // '/users/123'
+ctx.url.search;   // '?active=true'
+```
+
+### `ctx.request`
+
+Raw request information:
+
+```ts
+ctx.request.id;       // Unique request ID (auto-generated)
+ctx.request.method;   // 'GET', 'POST', etc
+ctx.request.url;      // Full URL as string
+ctx.request.pathname; // Pathname
+ctx.request.body();   // Promise<Buffer> — raw body
+```
+
+---
+
+## Route Parameters
+
+### `ctx.param(name)`
+
+Get a single route parameter:
+
+```ts
+// Route: /users/:id
+r.get('/users/:id', (ctx) => {
+  const id = ctx.param('id'); // '123'
+  return Res.send({ id });
+});
+```
+
+### `ctx.params`
+
+All route parameters as an object:
+
+```ts
+// Route: /posts/:postId/comments/:commentId
+ctx.params; // { postId: '1', commentId: '42' }
+```
+
+---
+
+## Query Parameters
+
+### `ctx.query`
+
+Access query parameters directly:
+
+```ts
+// Request: GET /search?q=gaman&page=2
+ctx.query.q;    // 'gaman'
+ctx.query.page; // '2'
+```
+
+For parameters with multiple values:
+
+```ts
+// Request: GET /filter?tag=js&tag=ts
+ctx.query.tag; // ['js', 'ts']
+```
+
+---
+
+## Request Body
+
+### `ctx.json<T>()`
+
+Parse body as JSON:
+
+```ts
+async Create(ctx) {
+  const body = await ctx.json<{ name: string; email: string }>();
+  // body.name, body.email
+  return Res.send(body, 201);
+}
+```
+
+### `ctx.text()`
+
+Read body as plain text:
+
+```ts
+async Webhook(ctx) {
+  const raw = await ctx.text();
+  return Res.message('OK');
+}
+```
+
+### `ctx.formData()`
+
+Parse body as FormData (multipart or URL-encoded):
+
+```ts
+async Upload(ctx) {
+  const form = await ctx.formData();
+  const name = form.get('name');
+  // ...
+}
+```
+
+---
+
+## Form Shortcuts
+
+### `ctx.input(name)`
+
+Get a single string value from form data:
+
+```ts
+const email = await ctx.input('email'); // string | null
+```
+
+### `ctx.inputs(name)`
+
+Get multiple string values from form data:
+
+```ts
+const tags = await ctx.inputs('tags'); // string[]
+```
+
+### `ctx.file(name)`
+
+Get a single file from form data:
+
+```ts
+const avatar = await ctx.file('avatar'); // GFile | null
+
+if (avatar) {
+  avatar.name;     // original file name
+  avatar.type;     // MIME type
+  avatar.size;     // size in bytes
+  // ...
+}
+```
+
+### `ctx.files(name)`
+
+Get multiple files from form data:
+
+```ts
+const images = await ctx.files('images'); // GFile[]
+```
+
+---
+
+## Headers
+
+### `ctx.header(key)`
+
+Get a specific header value (case-insensitive):
+
+```ts
+const token = ctx.header('Authorization'); // string | null
+const contentType = ctx.header('Content-Type');
+```
+
+### `ctx.headers`
+
+`GamanHeader` instance for reading and manipulating headers:
+
+```ts
+// Read
+ctx.headers.get('Content-Type');
+
+// Set response header
+ctx.headers.set('X-Custom-Header', 'value');
+```
+
+---
+
+## Cookies
+
+### `ctx.cookies`
+
+Bun's `CookieMap` instance for accessing cookies:
+
+```ts
+const session = ctx.cookies.get('session_id');
+```
+
+---
+
+## Data Store
+
+Middleware and handlers can share data via the context store:
+
+### `ctx.set(key, value)`
+
+```ts
+ctx.set('user', { id: 1, name: 'Angga' });
+```
+
+### `ctx.get<T>(key)`
+
+```ts
+const user = ctx.get<{ id: number; name: string }>('user');
+```
+
+### `ctx.has(key)`
+
+```ts
+if (ctx.has('user')) {
+  // user was set by middleware
+}
+```
+
+### `ctx.delete(key)`
+
+```ts
+ctx.delete('tempData');
+```
+
+---
+
+## Full Example
+
+```ts
+export default composeController(() => ({
+  async CreatePost(ctx) {
+    // Route params
+    const userId = ctx.param('userId');
+
+    // Query
+    const draft = ctx.query.draft === 'true';
+
+    // Body
+    const body = await ctx.json<{
+      title: string;
+      content: string;
+    }>();
+
+    // Headers
+    const token = ctx.header('Authorization');
+
+    // Data from middleware
+    const currentUser = ctx.get('user');
+
+    return Res.send({
+      userId,
+      draft,
+      title: body.title,
+      author: currentUser.name,
+    }, 201);
+  },
+}));
+```

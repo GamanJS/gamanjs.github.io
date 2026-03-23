@@ -1,0 +1,178 @@
+# Middleware
+
+Middleware in GamanJS runs **before** the route handler and can perform checks, modify context, or stop the request before it reaches the controller.
+
+## Creating Middleware
+
+```ts
+// src/module/middlewares/AppMiddleware.ts
+import { composeMiddleware } from 'gaman/compose';
+
+export default composeMiddleware(async (ctx, next) => {
+  // Logic before handler
+  console.log(`[${ctx.request.method}] ${ctx.path}`);
+
+  // Continue to next handler/middleware
+  return next();
+});
+```
+
+`composeMiddleware` returns a **factory function** — it must be called with `()` when registered.
+
+### Stopping a Request
+
+If middleware needs to stop the request (e.g., auth failure), **don't call `next()`**, return `Res` directly:
+
+```ts
+import { composeMiddleware } from 'gaman/compose';
+
+export default composeMiddleware(async (ctx, next) => {
+  const token = ctx.header('Authorization');
+
+  if (!token) {
+    return Res.message('Unauthorized').unauthorized();
+  }
+
+  // Token valid, continue
+  return next();
+});
+```
+
+## Global Middleware
+
+Register in `defineBootstrap` via `app.mount()`:
+
+```ts
+import { defineBootstrap } from 'gaman';
+import router from './router';
+import LogMiddleware from './module/middlewares/LogMiddleware';
+
+defineBootstrap(async (app) => {
+  // Global middleware — runs on ALL routes
+  app.mount(LogMiddleware());
+
+  app.mount(router);
+  app.mountServer({ http: 3431 });
+});
+```
+
+## Per-Route Middleware
+
+Register directly on route definitions:
+
+```ts
+import { composeRouter } from 'gaman/compose';
+import AuthMiddleware from './module/middlewares/AuthMiddleware';
+import UserController from './module/controllers/UserController';
+
+export default composeRouter((r) => {
+  r.get('/profile', [UserController, 'Profile'])
+    .middleware(AuthMiddleware());
+});
+```
+
+## Group Middleware
+
+Applied to all routes in the group:
+
+```ts
+r.group('/admin', (admin) => {
+  admin.get('/dashboard', [AdminController, 'Dashboard']);
+  admin.get('/settings', [AdminController, 'Settings']);
+}).middleware(AuthMiddleware());
+```
+
+## Priority System
+
+Middleware has a **priority** that controls execution order. Lower values (higher priority) run first.
+
+```ts
+import { Priority } from 'gaman/utils';
+```
+
+| Priority | Value | Description |
+|----------|-------|-------------|
+| `MONITOR` | `0` | Runs first, for logging/monitoring |
+| `VERY_HIGH` | `1` | Very high priority |
+| `HIGH` | `2` | High priority |
+| `NORMAL` | `3` | Default |
+| `LOW` | `4` | Low priority |
+| `VERY_LOW` | `5` | Runs last |
+
+### Default Config
+
+```ts
+export default composeMiddleware(
+  async (ctx, next) => {
+    return next();
+  },
+  { priority: Priority.NORMAL }, // default config
+);
+```
+
+### Override When Using
+
+```ts
+app.mount(LogMiddleware({ priority: Priority.MONITOR }));
+app.mount(AuthMiddleware({ priority: Priority.HIGH }));
+```
+
+### Custom Config
+
+Middleware can accept custom configuration:
+
+```ts
+import { composeMiddleware } from 'gaman/compose';
+
+type CorsConfig = {
+  origin: string;
+  methods: string[];
+};
+
+export default composeMiddleware<CorsConfig>(
+  async (ctx, next) => {
+    ctx.headers.set('Access-Control-Allow-Origin', '*');
+    return next();
+  },
+  {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    priority: Priority.VERY_HIGH,
+  },
+);
+```
+
+Usage:
+
+```ts
+app.mount(CorsMiddleware({ origin: 'https://example.com' }));
+```
+
+## Storing Data in Context
+
+Middleware can store data accessible by handlers:
+
+```ts
+export default composeMiddleware(async (ctx, next) => {
+  const user = await verifyToken(ctx.header('Authorization'));
+  ctx.set('user', user);   // Store in context
+  return next();
+});
+```
+
+Access in controller:
+
+```ts
+GetProfile(ctx) {
+  const user = ctx.get('user');  // Retrieve from context
+  return Res.send(user);
+}
+```
+
+## Execution Pipeline
+
+Middleware pipeline order:
+
+```
+Request → Global Middlewares (sorted by priority) → Route Middlewares → Handler → Response
+```

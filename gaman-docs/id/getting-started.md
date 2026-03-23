@@ -1,7 +1,4 @@
----
-title: Memulai
-description: Mulai dengan GamanJS — framework HTTP cepat yang dibangun di atas Bun runtime untuk membangun REST API terstruktur.
----
+# Memulai
 
 ## Persyaratan
 
@@ -42,14 +39,14 @@ bun add gaman @gaman/michi
 ## Menjalankan Server
 
 ```bash
-bun run dev
+bun run src/index.ts
 ```
 
 Output:
 
 ```
 GamanJS Framework v2
-A Lean Framework for Heavy-Duty Enterprise Performance.
+The Universal Transport Layer for Your Logic.
  ──────────────────────────────────────
 HTTP  : Listening at http://localhost:3431
  ──────────────────────────────────────
@@ -58,6 +55,6 @@ Orchestration complete. Ready for requests.
 
 ## Selanjutnya
 
-- [Bootstrap](/id/docs/overview/bootstrap) — Konfigurasi dan menjalankan server
-- [Router](/id/docs/overview/routing) — Mendefinisikan route
-- [Controller](/id/docs/overview/controllers) — Memisahkan handler logic
+- [Bootstrap](./bootstrap.md) — Konfigurasi dan menjalankan server
+- [Router](./router.md) — Mendefinisikan route
+- [Controller](./controller.md) — Memisahkan handler logic

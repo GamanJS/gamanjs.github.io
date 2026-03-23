@@ -132,8 +132,8 @@ export default function CodeTabs() {
   const Icon = ICONS[active];
 
   return (
-    <div className="relative w-full md:max-w-6xl mx-auto my-8 rounded-xl overflow-hidden shadow-lg shadow-purple-500/10">
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-pink-500/10 backdrop-blur-xl border border-white/10 rounded-xl" />
+    <div className="relative w-full md:max-w-6xl mx-auto my-8 rounded-xl overflow-hidden shadow-lg shadow-indigo-500/10">
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-500/10 backdrop-blur-xl border border-white/10 rounded-xl" />
 
       <div className="relative z-10">
         <div className="flex flex-wrap md:flex-nowrap sm:gap-2 bg-stone-900/70 border-b border-stone-700/50 p-4 backdrop-blur-md relative">
@@ -145,7 +145,7 @@ export default function CodeTabs() {
                   onClick={() => setActive(key)}
                   className={`flex items-center gap-1 px-4 py-2 text-sm rounded-lg transition-colors font-semibold ${
                     active === key
-                      ? "bg-pink-500/30 text-pink-300 shadow-inner"
+                      ? "bg-blue-500/30 text-blue-300 shadow-inner"
                       : "text-stone-400 hover:bg-stone-800/40"
                   }`}
                 >
@@ -158,7 +158,7 @@ export default function CodeTabs() {
         </div>
 
         <div className="px-4 py-3 border-b border-stone-700/40 bg-black/30 backdrop-blur-md">
-          <div className="flex items-center gap-2 text-lg font-semibold text-pink-300">
+          <div className="flex items-center gap-2 text-lg font-semibold text-blue-300">
             <Icon size={20} />
             {title}
           </div>
@@ -168,7 +168,7 @@ export default function CodeTabs() {
         {/* Code Block */}
         <div className="relative bg-black/40 backdrop-blur-lg group">
           <div className="absolute -top-6 left-4 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-            <div className="relative px-3 py-1 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 border border-white/20 text-xs font-mono text-white text-bold shadow-[0_0_10px_rgba(255,100,200,0.3)] backdrop-blur-md">
+            <div className="relative px-3 py-1 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 border border-white/20 text-xs font-mono text-white text-bold shadow-[0_0_10px_rgba(59,130,246,0.3)] backdrop-blur-md">
               {FILES[active].file}
               <span className="absolute left-5 -bottom-1 w-2 h-2 bg-white/10 rotate-45 border-b border-r border-white/20" />
             </div>

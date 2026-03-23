@@ -1,0 +1,159 @@
+# Exception Handler
+
+GamanJS menyediakan `composeException` untuk menangani error yang terjadi saat proses request. Exception handler bisa didaftarkan secara **global** (semua route) atau **per-route**.
+
+## Membuat Exception Handler
+
+```ts
+// src/module/exceptions/GlobalException.ts
+import { composeException } from 'gaman/compose';
+
+export default composeException((error, ctx) => {
+  console.error(`[Error] ${ctx.path}:`, error.message);
+
+  return Res.send({
+    error: error.message,
+    path: ctx.path,
+  }).internalServerError();
+});
+```
+
+`composeException` menerima callback `(error, ctx) => Responder` dan mengembalikan `ExceptionHandler`.
+
+## Global Exception Handler
+
+Daftarkan di `defineBootstrap` via `app.mount()`:
+
+```ts
+import { defineBootstrap } from 'gaman';
+import router from './router';
+import GlobalException from './module/exceptions/GlobalException';
+
+defineBootstrap(async (app) => {
+  // Daftarkan global exception handler
+  app.mount(GlobalException);
+
+  app.mount(router);
+  app.mountServer({ http: 3431 });
+});
+```
+
+Global exception handler menangkap **semua error** yang tidak di-handle oleh exception handler per-route.
+
+## Per-Route Exception Handler
+
+Override error handling untuk route spesifik:
+
+```ts
+import { composeRouter } from 'gaman/compose';
+import { composeException } from 'gaman/compose';
+import PaymentController from './module/controllers/PaymentController';
+
+const PaymentErrorHandler = composeException((error, ctx) => {
+  // Log ke external service
+  console.error('[Payment Error]', error);
+
+  return Res.send({
+    error: 'Payment processing failed',
+    reference: ctx.request.id,
+  }).internalServerError();
+});
+
+export default composeRouter((r) => {
+  r.post('/payment/process', [PaymentController, 'Process'])
+    .exception(PaymentErrorHandler);
+});
+```
+
+## Inline Exception Handler
+
+Bisa juga langsung inline tanpa `composeException`:
+
+```ts
+r.post('/payment', [PaymentController, 'Process'])
+  .exception((error, ctx) => {
+    return Res.message('Payment failed').internalServerError();
+  });
+```
+
+GamanJS akan otomatis membungkusnya dengan `composeException` secara internal.
+
+## Group Exception Handler
+
+Berlaku ke semua route dalam group:
+
+```ts
+r.group('/payment', (payment) => {
+  payment.post('/process', [PaymentController, 'Process']);
+  payment.post('/refund', [PaymentController, 'Refund']);
+}).exception(PaymentErrorHandler);
+```
+
+## Prioritas Exception Handler
+
+```
+Error terjadi di handler
+    ↓
+Ada per-route exception handler?
+    → Ya: Gunakan per-route handler
+    → Tidak: Ada global exception handler?
+        → Ya: Gunakan global handler
+        → Tidak: Return response 500 default
+```
+
+## Error di Exception Handler
+
+Jika exception handler itu sendiri throw error ("fatal error"), GamanJS akan mengembalikan:
+
+```
+HTTP 500: "Fatal Server Error"
+```
+
+## Contoh: Structured Error Handling
+
+```ts
+// src/module/exceptions/GlobalException.ts
+import { composeException } from 'gaman/compose';
+
+class AppError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number = 500,
+    public errors?: Record<string, string[]>,
+  ) {
+    super(message);
+  }
+}
+
+export default composeException((error, ctx) => {
+  if (error instanceof AppError) {
+    if (error.errors) {
+      return Res.error(error.errors, {
+        status: error.statusCode,
+        message: error.message,
+      });
+    }
+    return Res.message(error.message, error.statusCode);
+  }
+
+  // Unknown error
+  console.error('[Unhandled]', error);
+  return Res.message('Internal Server Error').internalServerError();
+});
+```
+
+Penggunaan di controller:
+
+```ts
+async Create(ctx) {
+  const body = await ctx.json();
+
+  if (!body.email) {
+    throw new AppError('Validation failed', 422, {
+      email: ['Email wajib diisi'],
+    });
+  }
+
+  // ... logic
+}
+```

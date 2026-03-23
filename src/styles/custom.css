@@ -1,34 +1,30 @@
-/* 🌸 Soft Bubblegum Dream Theme (Dark mode) */
+/* 🏢 Enterprise Professional Theme (Dark mode) */
 :root {
-  --sl-color-bg-sidebar: rgba(180, 180, 180, 0.2);
-  --sl-color-bg-nav: rgba(180, 180, 180, 0.2);
+  --sl-color-bg-sidebar: rgba(15, 23, 42, 0.4); /* slate-900 with opacity */
+  --sl-color-bg-nav: rgba(15, 23, 42, 0.4);
 
   --ec-frm-edBg: transparent; /* Background code */
 
-  --sl-color-accent-low: #4a2c5c; /* soft purple shadow */
-  --sl-color-accent: #ff9ecf; /* main bubblegum pink */
-  --sl-color-accent-high: #ffd6e9; /* soft highlight pink */
+  --sl-color-accent-low: #1e293b; /* slate-800 */
+  --sl-color-accent: #3b82f6; /* blue-500 professional accent */
+  --sl-color-accent-high: #60a5fa; /* blue-400 */
 
-  --sl-color-white: #fff5fa; /* creamy white */
-  --sl-color-gray-1: #ffe4f2;
-  --sl-color-gray-2: #e8bfe0;
-  --sl-color-gray-3: #c995ca;
-  --sl-color-gray-4: #9f6aa6;
-  --sl-color-gray-5: #2a222b;
-  --sl-color-black: #000000;
+  --sl-color-white: #f8fafc; /* slate-50 */
+  --sl-color-gray-1: #e2e8f0; /* slate-200 */
+  --sl-color-gray-2: #cbd5e1; /* slate-300 */
+  --sl-color-gray-3: #94a3b8; /* slate-400 */
+  --sl-color-gray-4: #64748b; /* slate-500 */
+  --sl-color-gray-5: #334155; /* slate-700 */
+  --sl-color-black: #0f172a; /* slate-900 */
 
-
-  --bg-primary: #233241;
-  --text-primary: #d6d3d1;
-
+  --bg-primary: #020617; /* slate-950 main background */
+  --text-primary: #f1f5f9; /* slate-100 */
 }
+
 html,
 body {
   color-scheme: dark;
-  
 }
-
-
 
 starlight-theme-select {
   display: none;
@@ -38,90 +34,83 @@ starlight-theme-select {
 /*                               EXPRESSIVE CODE                              */
 /* -------------------------------------------------------------------------- */
 .expressive-code, starlight-file-tree {
-  border-radius: 10px;
-  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  background-color: rgba(15, 23, 42, 0.6); /* slate-900 */
+  border: 1px solid rgba(51, 65, 85, 0.5); /* slate-700 border */
   
-  backdrop-filter: blur(10px) saturate(100%);
-  -webkit-backdrop-filter: blur(10px) saturate(100%); /* Safari */
+  backdrop-filter: blur(12px) saturate(100%);
+  -webkit-backdrop-filter: blur(12px) saturate(100%); /* Safari */
   
   overflow: hidden;
-  box-shadow: 0 0 10px rgba(255, 158, 231, 0.3),
-    /* pink glow */ 0 0 20px rgba(155, 100, 200, 0.15); /* purple tint */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+              0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .expressive-code pre {
   background: transparent;
 }
 
-
-
-/* 🍬 Bubblegum Scrollbar Theme */
+/* 🏢 Professional Scrollbar Theme */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--sl-color-bg);
-  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.2); /* slate-900 trans */
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #ffb6d9, #ff8fc4);
-  border-radius: 10px;
-  border: 2px solid var(--sl-color-bg);
-  transition: background 0.3s ease;
+  background: var(--sl-color-gray-5);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #ff9ecf, #ff6fb1);
+  background: var(--sl-color-gray-4);
 }
 
 /* Firefox support */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #ff9ecf var(--sl-color-bg);
+  scrollbar-color: var(--sl-color-gray-5) transparent;
 }
 
 option {
-  background-color: #201920;
+  background-color: #0f172a;
   color: white;
 }
 
 [data-theme="light"] option {
   background-color: #ffffff;
-  color: black;
+  color: #0f172a;
 }
-
 
 body {
   position: relative;
   z-index: 0;
+  background-color: var(--bg-primary);
 }
+
+/* Clean, enterprise background gradient */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(to top, var(--bg-primary), transparent);
+  background: radial-gradient(circle at top, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+              radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.05) 0%, transparent 30%);
   z-index: -1;
-  opacity: 1;
 }
 
 body::before {
   content: "";
   position: fixed;
-  opacity: 30%;
-  width: 100%;
-  height: 100%;
-  filter: blur(2px);
-  background-size: cover;
-  background-position: center center;
-  background-repeat: repeat;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   z-index: -2;
-  background: rgb(109, 65, 110);
-
 }
-
-
-

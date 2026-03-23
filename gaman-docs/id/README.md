@@ -1,0 +1,132 @@
+# GamanJS
+
+> _A Lean Framework for Heavy-Duty Enterprise Performance._
+
+GamanJS adalah framework HTTP ringan dan cepat yang dibangun di atas [Bun](https://bun.sh) runtime. Dirancang untuk membangun REST API yang terstruktur dengan arsitektur **Controller-Service-Middleware** yang bersih dan mudah di-maintain.
+
+## ✨ Fitur Utama
+
+- ⚡ **Blazing Fast** — Dibangun di atas Bun `Bun.serve()` untuk performa maksimal
+- 🏗️ **Arsitektur Terstruktur** — Pola Controller / Service / Middleware bawaan
+- 📦 **Standar Response** — Format response API yang konsisten via `Res` global
+- 🔀 **Router Deklaratif** — Definisi route yang bersih dengan `composeRouter`
+- 🧩 **Dependency Injection Sederhana** — DI via parameter default di controller
+- 🛡️ **Exception Handling** — Global & per-route exception handler
+- 🎯 **Middleware Priority** — Kontrol urutan middleware eksekusi
+
+## 📚 Daftar Isi
+
+| Halaman | Deskripsi |
+|---------|-----------|
+| [Memulai](./getting-started.md) | Instalasi & membuat project baru |
+| [Bootstrap](./bootstrap.md) | `defineBootstrap` & konfigurasi server |
+| [Router](./router.md) | Definisi route, grouping, & method |
+| [Controller](./controller.md) | Membuat controller dengan `composeController` |
+| [Service](./service.md) | Business logic dengan `composeService` |
+| [Middleware](./middleware.md) | Middleware & priority system |
+| [Response](./response.md) | Standar response API dengan `Res` |
+| [Context](./context.md) | Request context (`ctx`) secara detail |
+| [Exception Handler](./exception.md) | Error handling global & per-route |
+
+## 🚀 Quick Start
+
+```bash
+bun create gaman@latest
+```
+
+```
+src/
+├── index.ts              # Bootstrap aplikasi
+├── router.ts             # Definisi semua route
+└── module/
+    ├── controllers/
+    │   └── AppController.ts
+    ├── services/
+    │   └── AppService.ts
+    └── middlewares/
+        └── AppMiddleware.ts
+```
+
+### `src/index.ts`
+
+```ts
+import { defineBootstrap } from 'gaman';
+import router from './router';
+
+defineBootstrap(async (app) => {
+  app.mount(router);
+  app.mountServer({ http: 3431 });
+});
+```
+
+### `src/router.ts`
+
+```ts
+import { composeRouter } from 'gaman/compose';
+import AppController from './module/controllers/AppController';
+
+export default composeRouter((r) => {
+  r.get('/', [AppController, 'HelloWorld']);
+});
+```
+
+### `src/module/controllers/AppController.ts`
+
+```ts
+import { composeController } from 'gaman/compose';
+import AppService from '../services/AppService';
+import type { RT } from 'gaman/types';
+
+export default composeController(
+  (appService: RT<typeof AppService> = AppService()) => ({
+    HelloWorld(ctx) {
+      return Res.message(appService.WelcomeMessage());
+    },
+  }),
+);
+```
+
+### `src/module/services/AppService.ts`
+
+```ts
+import { composeService } from 'gaman/compose';
+
+export default composeService(() => ({
+  WelcomeMessage() {
+    return '❤️ Welcome to GamanJS';
+  },
+}));
+```
+
+### `src/module/middlewares/AppMiddleware.ts`
+
+```ts
+import { composeMiddleware } from 'gaman/compose';
+
+export default composeMiddleware(async (ctx, next) => {
+  return next();
+});
+```
+
+Jalankan:
+
+```bash
+bun run dev
+```
+
+Server akan berjalan di `http://localhost:3431`. Akses endpoint `/` dan kamu akan mendapat response standar:
+
+```json
+{
+  "success": true,
+  "message": "❤️ Welcome to GamanJS",
+  "metadata": {
+    "requestId": "abc123...",
+    "timestamp": "2026-03-23T07:00:00.000Z"
+  }
+}
+```
+
+## 📄 Lisensi
+
+MIT © [Angga7Togk](https://github.com/angga7togk)

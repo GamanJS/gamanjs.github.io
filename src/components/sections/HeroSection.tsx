@@ -49,35 +49,32 @@ export default function HeroSection() {
   return (
     <section className="relative flex flex-col items-center justify-center text-center px-6 h-[100dvh] overflow-hidden">
 
-      <div className="absolute inset-0 bg-[url('/img/bg-turtle-pink.png')] bg-cover bg-bg-primary/50 bg-blend-multiply before:absolute before:inset-0 before:bg-gradient-to-t before:from-bg-primary before:via-bg-primary/60 before:to-transparent after:absolute after:inset-0 after:bg-[radial-gradient(ellipse_at_center,_rgba(255,0,150,0.1),_transparent_70%)]" />
+      <div className="absolute inset-0 bg-[url('/img/bg-turtle-pink.png')] bg-cover bg-bg-primary/50 bg-blend-multiply before:absolute before:inset-0 before:bg-gradient-to-t before:from-bg-primary before:via-bg-primary/60 before:to-transparent after:absolute after:inset-0 after:bg-[radial-gradient(ellipse_at_center,_rgba(59,130,246,0.1),_transparent_70%)]" />
 
-      <div className="absolute -top-20 -left-32 w-96 h-96 bg-pink-500/20 rounded-full blur-[160px] animate-pulse" />
-      <div className="absolute -top-20 right-0 w-[28rem] h-[28rem] bg-purple-600/20 rounded-full blur-[180px] animate-pulse delay-1000" />
+      <div className="absolute -top-20 -left-32 w-96 h-96 bg-blue-500/20 rounded-full blur-[160px] animate-pulse" />
+      <div className="absolute -top-20 right-0 w-[28rem] h-[28rem] bg-indigo-600/20 rounded-full blur-[180px] animate-pulse delay-1000" />
 
       <div className="relative z-10 flex flex-col items-center">
         <h1 className="text-5xl md:text-7xl font-extrabold leading-tight tracking-tight mb-6">
-          Build{" "}
-          <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Sweet Backends
+          <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-clip-text text-transparent">
+            Heavy-Duty
           </span>{" "}
-          Fast
+          Enterprise Performance
         </h1>
 
         <p className="text-lg md:text-xl md:max-w-3xl text-text-primary leading-relaxed mb-10">
-          GamanJS is a modern backend framework built for resilience,
-          scalability, simplicity, and blazing performance — empowering
-          developers to build beautiful APIs faster than ever.
+          GamanJS is a lean framework engineered for heavy-duty enterprise workloads. Built on the Bun runtime, it delivers unparalleled speed, uncompromised stability, and a clean architecture that scales with your business.
         </p>
 
         <a
           href="/docs"
-          className="px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-semibold shadow-lg shadow-pink-500/30 hover:shadow-pink-400/50 hover:scale-105 transition-all"
+          className="px-8 py-3 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold shadow-lg shadow-blue-500/30 hover:shadow-blue-400/50 hover:scale-105 transition-all"
         >
           Get Started
         </a>
       </div>
 
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[90%] h-px bg-gradient-to-r from-transparent via-pink-500/40 to-transparent">
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[90%] h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent">
         <motion.img
           src="/img/new/3.png"
           alt="GamanJS Turtle"

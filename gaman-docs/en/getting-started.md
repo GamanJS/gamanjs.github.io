@@ -1,7 +1,4 @@
----
-title: Getting Started
-description: Get started with GamanJS — a fast HTTP framework built on Bun runtime for building structured REST APIs.
----
+# Getting Started
 
 ## Requirements
 
@@ -42,14 +39,14 @@ bun add gaman @gaman/michi
 ## Running the Server
 
 ```bash
-bun run dev
+bun run src/index.ts
 ```
 
 Output:
 
 ```
 GamanJS Framework v2
-A Lean Framework for Heavy-Duty Enterprise Performance.
+The Universal Transport Layer for Your Logic.
  ──────────────────────────────────────
 HTTP  : Listening at http://localhost:3431
  ──────────────────────────────────────
@@ -58,6 +55,6 @@ Orchestration complete. Ready for requests.
 
 ## What's Next
 
-- [Bootstrap](/docs/overview/bootstrap) — Configuration and starting the server
-- [Router](/docs/overview/routing) — Defining routes
-- [Controller](/docs/overview/controllers) — Separating handler logic
+- [Bootstrap](./bootstrap.md) — Configuration and starting the server
+- [Router](./router.md) — Defining routes
+- [Controller](./controller.md) — Separating handler logic

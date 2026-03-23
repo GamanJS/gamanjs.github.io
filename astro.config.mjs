@@ -22,7 +22,7 @@ export default defineConfig({
   base: "/",
   integrations: [starlight({
     title: "Gaman Docs",
-    favicon: "/public/img/gaman-big.png",
+    favicon: "/public/img/new/3.png",
     locales: {
       root: { label: "EN", lang: "en", dir: "ltr" },
       id: { label: "ID", lang: "id", dir: "ltr" },
@@ -53,7 +53,7 @@ export default defineConfig({
       },
     ],
     logo: {
-      src: "/public/img/gaman-big.png",
+      src: "/public/img/gaman-new-banner.png",
     },
     customCss: ["./src/styles/custom.css"],
     sidebar: [
@@ -83,9 +83,9 @@ export default defineConfig({
           },
           { label: "Responses", link: "docs/overview/responses" },
           { label: "Middlewares", link: "docs/overview/middlewares" },
-          { label: "Interceptors", link: "docs/overview/interceptors" },
+          // { label: "Interceptors", link: "docs/overview/interceptors" },
           { label: "Exceptions", link: "docs/overview/exceptions" },
-          { label: "CLI", link: "docs/overview/cli" },
+          // { label: "CLI", link: "docs/overview/cli" },
         ],
       },
       {
@@ -93,11 +93,11 @@ export default defineConfig({
         collapsed: true,
         items: [
           { label: "Context", link: "docs/technical/context" },
-          { label: "Session", link: "docs/technical/session" },
+          // { label: "Session", link: "docs/technical/session" },
           { label: "Cookies", link: "docs/technical/cookies" },
           { label: "Logging", link: "docs/technical/logging" },
-          { label: "Static Serve", link: "docs/technical/static-serve" },
-          { label: "Text Format", link: "docs/technical/textformat" },
+          // { label: "Static Serve", link: "docs/technical/static-serve" },
+          // { label: "Text Format", link: "docs/technical/textformat" },
         ],
       },
       {
@@ -109,53 +109,53 @@ export default defineConfig({
         },
         items: [
           { label: "CORS", link: "docs/security/cors" },
-          { label: "Basic Auth", link: "docs/security/basic-auth" },
-          {
-            label: "Rate Limit",
-            link: "docs/security/rate-limit",
-            badge: {
-              text: "Baru",
-              variant: "success",
-            },
-          },
-          {
-            label: "JWT (Json Web Token)",
-            link: "docs/security/jwt",
-            badge: {
-              text: "Baru",
-              variant: "success",
-            },
-          },
+          // { label: "Basic Auth", link: "docs/security/basic-auth" },
+          // {
+          //   label: "Rate Limit",
+          //   link: "docs/security/rate-limit",
+          //   badge: {
+          //     text: "Baru",
+          //     variant: "success",
+          //   },
+          // },
+          // {
+          //   label: "JWT (Json Web Token)",
+          //   link: "docs/security/jwt",
+          //   badge: {
+          //     text: "Baru",
+          //     variant: "success",
+          //   },
+          // },
         ],
       },
-      {
-        label: "View Engine",
-        collapsed: true,
-        badge: {
-          text: "Baru",
-          variant: "success",
-        },
-        items: [
-          { label: "EJS", link: "docs/view-engine/ejs" },
-          { label: "Nunjucks", link: "docs/view-engine/nunjucks" },
-          {
-            label: "Edge",
-            link: "docs/view-engine/edge",
-            badge: {
-              text: "Baru",
-              variant: "success",
-            },
-          },
-        ],
-      },
-      {
-        label: "Websocket",
-        collapsed: true,
-        items: [
-          { label: "Internal", link: "docs/websocket/internal" },
-          { label: "External", link: "docs/websocket/external" },
-        ],
-      },
+      // {
+      //   label: "View Engine",
+      //   collapsed: true,
+      //   badge: {
+      //     text: "Baru",
+      //     variant: "success",
+      //   },
+      //   items: [
+      //     { label: "EJS", link: "docs/view-engine/ejs" },
+      //     { label: "Nunjucks", link: "docs/view-engine/nunjucks" },
+      //     {
+      //       label: "Edge",
+      //       link: "docs/view-engine/edge",
+      //       badge: {
+      //         text: "Baru",
+      //         variant: "success",
+      //       },
+      //     },
+      //   ],
+      // },
+      // {
+      //   label: "Websocket",
+      //   collapsed: true,
+      //   items: [
+      //     { label: "Internal", link: "docs/websocket/internal" },
+      //     { label: "External", link: "docs/websocket/external" },
+      //   ],
+      // },
     ],
   }), sitemap(), react()],
 });

@@ -5,7 +5,7 @@ export default function GamanLivePreview() {
   const [showFrame, setShowFrame] = useState(false);
 
   return (
-    <div className="relative flex flex-col items-center justify-center w-full h-[600px] overflow-clip border border-purple-500/50 text-white rounded-lg shadow-lg shadow-purple-300/10 bg-gradient-to-bl from-purple-300/10 via-transparent to-transparent ">
+    <div className="relative flex flex-col items-center justify-center w-full h-[600px] overflow-clip border border-indigo-500/50 text-white rounded-lg shadow-lg shadow-indigo-300/10 bg-gradient-to-bl from-indigo-300/10 via-transparent to-transparent ">
       <AnimatePresence>
         {!showFrame && (
           <motion.button
@@ -14,7 +14,7 @@ export default function GamanLivePreview() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.3 }}
-            className="px-8 py-4 text-lg font-semibold bg-purple-500 hover:bg-purple-400 rounded-xl shadow-lg shadow-purple-600/30 transition-all duration-200"
+            className="px-8 py-4 text-lg font-semibold bg-indigo-500 hover:bg-indigo-400 rounded-xl shadow-lg shadow-indigo-600/30 transition-all duration-200"
           >
             Live Preview
           </motion.button>

@@ -1,0 +1,118 @@
+# Controller
+
+Controller di GamanJS adalah tempat untuk menangani HTTP request. Gunakan `composeController` untuk membuat controller yang terstruktur dengan dependency injection sederhana.
+
+## Membuat Controller
+
+```ts
+// src/module/controllers/AppController.ts
+import { composeController } from 'gaman/compose';
+
+export default composeController(() => ({
+  HelloWorld(ctx) {
+    return Res.message('Hello World!');
+  },
+
+  About(ctx) {
+    return Res.send({ name: 'GamanJS', version: '2.0' });
+  },
+}));
+```
+
+`composeController` menerima **factory function** yang mengembalikan object berisi method-method handler. Setiap method menerima `ctx` ([Context](./context.md)) sebagai parameter.
+
+## Dependency Injection
+
+Controller mendukung DI melalui **parameter default** di factory function:
+
+```ts
+import { composeController } from 'gaman/compose';
+import UserService from '../services/UserService';
+import type { RT } from 'gaman/types';
+
+export default composeController(
+  (userService: RT<typeof UserService> = UserService()) => ({
+    GetAll(ctx) {
+      const users = userService.findAll();
+      return Res.send(users);
+    },
+
+    GetById(ctx) {
+      const id = ctx.param('id');
+      const user = userService.findById(id);
+
+      if (!user) {
+        return Res.message('User not found').notFound();
+      }
+
+      return Res.send(user);
+    },
+
+    async Create(ctx) {
+      const body = await ctx.json();
+      const user = userService.create(body);
+      return Res.send(user, 201);
+    },
+  }),
+);
+```
+
+### Type Helper `RT<T>`
+
+`RT` adalah shortcut untuk `ReturnType<typeof T>`. Gunakan ini untuk mendapatkan tipe return dari service:
+
+```ts
+import type { RT } from 'gaman/types';
+
+// Daripada ini:
+type UserServiceType = ReturnType<typeof UserService>;
+
+// Gunakan ini:
+type UserServiceType = RT<typeof UserService>;
+```
+
+## Multiple Services
+
+```ts
+import { composeController } from 'gaman/compose';
+import UserService from '../services/UserService';
+import EmailService from '../services/EmailService';
+import type { RT } from 'gaman/types';
+
+export default composeController(
+  (
+    userService: RT<typeof UserService> = UserService(),
+    emailService: RT<typeof EmailService> = EmailService(),
+  ) => ({
+    async Register(ctx) {
+      const body = await ctx.json();
+      const user = userService.create(body);
+      emailService.sendWelcome(user.email);
+      return Res.send(user, 201);
+    },
+  }),
+);
+```
+
+## Mendaftarkan di Router
+
+Controller didaftarkan dengan format **tuple** `[ControllerFactory, 'NamaMethod']`:
+
+```ts
+import { composeRouter } from 'gaman/compose';
+import UserController from './module/controllers/UserController';
+
+export default composeRouter((r) => {
+  r.get('/users', [UserController, 'GetAll']);
+  r.get('/users/:id', [UserController, 'GetById']);
+  r.post('/users', [UserController, 'Create']);
+  r.put('/users/:id', [UserController, 'Update']);
+  r.delete('/users/:id', [UserController, 'Delete']);
+});
+```
+
+## Tips
+
+- Satu file controller bisa berisi banyak method — grupkan berdasarkan domain/resource
+- Gunakan `RT<typeof Service>` untuk DI yang type-safe
+- Controller hanya berisi logic **handling** — business logic taruh di [Service](./service.md)
