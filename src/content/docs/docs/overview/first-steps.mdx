@@ -19,14 +19,15 @@ This will generate a new project with the following structure:
 my-app/
 ├── src/
 │   ├── index.ts                      # Entry point & bootstrap
-│   ├── router.ts                     # Route definitions
-│   └── module/
-│       ├── controllers/
-│       │   └── AppController.ts      # Example controller
-│       ├── services/
-│       │   └── AppService.ts         # Example service
-│       └── middlewares/
-│           └── AppMiddleware.ts      # Example middleware
+│   └── modules/
+│       └── app/
+│           ├── controllers/
+│           │   └── AppController.ts      # Example controller
+│           ├── services/
+│           │   └── AppService.ts         # Example service
+│           ├── middlewares/
+│           │   └── AppMiddleware.ts      # Example middleware
+│           └── AppRoutes.ts              # Route definitions
 ├── package.json
 └── tsconfig.json
 ```
@@ -42,14 +43,14 @@ bun add gaman @gaman/michi
 ## Running the Server
 
 ```bash
-bun run dev
+bun run src/index.ts
 ```
 
 Output:
 
 ```
 GamanJS Framework v2
-A Lean Framework for Heavy-Duty Enterprise Performance.
+The Universal Transport Layer for Your Logic.
  ──────────────────────────────────────
 HTTP  : Listening at http://localhost:3431
  ──────────────────────────────────────

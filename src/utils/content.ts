@@ -21,7 +21,7 @@ export const navbar = {
 // Feature Section
 export const features = {
   description:
-    "Everything you need to build reliable, scalable backend applications all in one framework.",
+    "A framework designed for the long game. Build on a foundation of speed, logic, and absolute type safety.",
   items: [
     {
       icon: Code,
@@ -35,8 +35,8 @@ export const features = {
     },
     {
       icon: Box,
-      title: "Scalable Architecture",
-      text: "From startups to enterprise apps.",
+      title: "Enterprise Ready",
+      text: "Engineered to handle complex business logic and massive traffic with ease.",
     },
     // {
     //   icon: Code1,
@@ -54,7 +54,7 @@ export const features = {
 // Plugin Section
 export const plugins = {
   description:
-    "GamanJS comes with a collection of officially maintained and well-documented plugins.",
+    "GamanJS ecosystem is modular. Add only what you need, keeping your production footprint minimal.",
   items: [
     {
       icon: Secure,

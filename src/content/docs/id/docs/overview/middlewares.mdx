@@ -8,7 +8,7 @@ Middleware di GamanJS berjalan **sebelum** handler route dan bisa melakukan peng
 ## Membuat Middleware
 
 ```ts
-// src/module/middlewares/AppMiddleware.ts
+// src/modules/app/middlewares/AppMiddleware.ts
 import { composeMiddleware } from 'gaman/compose';
 
 export default composeMiddleware(async (ctx, next) => {
@@ -24,7 +24,7 @@ export default composeMiddleware(async (ctx, next) => {
 
 ### Menghentikan Request
 
-Jika middleware ingin menghentikan request (misal: auth gagal), **jangan panggil `next()`**, langsung return `Res`:
+Jika middleware ingin menghentikan request (misal: auth gagal), **jangan panggil `next()`**, kembalikan response menggunakan `ctx.send()`:
 
 ```ts
 import { composeMiddleware } from 'gaman/compose';
@@ -33,7 +33,7 @@ export default composeMiddleware(async (ctx, next) => {
   const token = ctx.header('Authorization');
 
   if (!token) {
-    return Res.message('Unauthorized').unauthorized();
+    return ctx.send({ message: 'Unauthorized' }).unauthorized();
   }
 
   // Token valid, lanjutkan
@@ -48,7 +48,7 @@ Daftarkan di `defineBootstrap` via `app.mount()`:
 ```ts
 import { defineBootstrap } from 'gaman';
 import router from './router';
-import LogMiddleware from './module/middlewares/LogMiddleware';
+import LogMiddleware from './modules/app/middlewares/LogMiddleware';
 
 defineBootstrap(async (app) => {
   // Middleware global — berjalan di SEMUA route
@@ -65,8 +65,8 @@ Daftarkan langsung di route definition:
 
 ```ts
 import { composeRouter } from 'gaman/compose';
-import AuthMiddleware from './module/middlewares/AuthMiddleware';
-import UserController from './module/controllers/UserController';
+import AuthMiddleware from './modules/app/middlewares/AuthMiddleware';
+import UserController from './modules/app/controllers/UserController';
 
 export default composeRouter((r) => {
   r.get('/profile', [UserController, 'Profile'])
@@ -168,14 +168,6 @@ Akses di controller:
 ```ts
 GetProfile(ctx) {
   const user = ctx.get('user');  // Ambil dari context
-  return Res.send(user);
+  return ctx.send(user).ok();
 }
-```
-
-## Pipeline Eksekusi
-
-Urutan middleware pipeline:
-
-```
-Request → Global Middlewares (sorted by priority) → Route Middlewares → Handler → Response
 ```

@@ -20,26 +20,28 @@ GamanJS adalah kerangka kerja untuk aplikasi backend, Anda dapat menginstall men
 />
 
 ## Basic
+
 ```ts
 // index.ts
-import { session } from "@gaman/session"
+import { session } from "@gaman/session";
 
 defineBootstrap((app) => {
-   app.mount(
-     session({
-        crossSite: false // if you want 2 applications such as Vite React + GamanJS, crossSite: make it true
-     })
-   )
+  app.mount(
+    session({
+      crossSite: false, // if you want 2 applications such as Vite React + GamanJS, crossSite: make it true
+    }),
+  );
 });
 ```
+
 ```ts
 // Handler.ts
 async (ctx) => {
-  await ctx.session.set({userId: '...'});
-  
+  await ctx.session.set({ userId: "..." });
+
   await ctx.session.get();
   await ctx.session.delete();
-}
+};
 ```
 
 ## Cross Site
@@ -63,6 +65,7 @@ jika anda ingin cross site anda memerlukan plugin tambahan yaitu [@gaman/cors](/
 :::
 
 pastikan credentials nya di kasih true biar dari backend bisa ngirim cookies ke client!
+
 ```ts
 // index.ts
 import { session } from "@gaman/session"
@@ -88,11 +91,10 @@ defineBootstrap((app) => {
 kita coba buat route login disini untuk membuat session, semisal berhasil login
 
 ```ts
-route.post('/login', async (ctx) => {
+route.post("/login", async (ctx) => {
+  await ctx.session.set({ userId: "abogoboga" }); // set session
 
-  await ctx.session.set({ userId: 'abogoboga' }); // set session
-
-  return Res.json({message: "OK!"});
+  return Res.json({ message: "OK!" });
 });
 ```
 
@@ -102,11 +104,11 @@ disini di server client side anggap aja kita memakai html biasa, disini request 
 
 ```html
 <script>
-  fetch('https://backend.com/login', {
+  fetch("https://backend.com/login", {
     method: "POST",
-    credentials: 'include' // must be include
+    credentials: "include", // must be include
   });
-
 </script>
 ```
+
 pastikan `credentials: 'include'` biar bisa nerima cookies dari backend dan otomatis ke set ke client side (HTTP Only)

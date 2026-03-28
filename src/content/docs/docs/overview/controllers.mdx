@@ -3,41 +3,54 @@ title: Controllers
 description: Controllers in GamanJS handle HTTP requests using composeController with simple dependency injection.
 ---
 
-Controllers in GamanJS handle HTTP requests. Use `composeController` to create structured controllers with simple dependency injection.
+Controllers in GamanJS handle HTTP requests. Use `composeController` to create structured controllers with simple dependency injection through destructuring.
 
 ## Creating a Controller
 
 ```ts
-// src/module/controllers/AppController.ts
+// src/modules/app/controllers/AppController.ts
 import { composeController } from 'gaman/compose';
 
-export default composeController(() => ({
-  HelloWorld(ctx) {
-    return Res.message('Hello World!');
-  },
+export default composeController(() => {
+  /**
+   * You can put your private logic here
+   */
 
-  About(ctx) {
-    return Res.send({ name: 'GamanJS', version: '2.0' });
-  },
-}));
+  return {
+    HelloWorld(ctx) {
+      return ctx.send('Hello World!').ok();
+    },
+
+    About(ctx) {
+      return ctx.send({ name: 'GamanJS', version: '2.0' }).ok();
+    },
+  };
+});
 ```
 
 `composeController` takes a **factory function** that returns an object containing handler methods. Each method receives `ctx` ([Context](/docs/technical/context)) as a parameter.
 
 ## Dependency Injection
 
-Controllers support DI through **default parameters** in the factory function:
+Controllers support DI through **destructuring** in the factory function. It is recommended to define a `Deps` type for your services.
 
 ```ts
 import { composeController } from 'gaman/compose';
-import UserService from '../services/UserService';
-import type { RT } from 'gaman/types';
+import { UserService } from '../services/UserService';
 
-export default composeController(
-  (userService: RT<typeof UserService> = UserService()) => ({
+export type Deps = {
+  userService: UserService;
+};
+
+export default composeController(({ userService }: Deps) => {
+  /**
+   * TODO: your private logic in here
+   */
+
+  return {
     GetAll(ctx) {
       const users = userService.findAll();
-      return Res.send(users);
+      return ctx.send(users).ok();
     },
 
     GetById(ctx) {
@@ -45,77 +58,74 @@ export default composeController(
       const user = userService.findById(id);
 
       if (!user) {
-        return Res.message('User not found').notFound();
+        return ctx.send('User not found').notFound();
       }
 
-      return Res.send(user);
+      return ctx.send(user).ok();
     },
 
     async Create(ctx) {
       const body = await ctx.json();
       const user = userService.create(body);
-      return Res.send(user, 201);
+      return ctx.send(user).created();
     },
-  }),
-);
-```
-
-### Type Helper `RT<T>`
-
-`RT` is a shortcut for `ReturnType<typeof T>`. Use it to get the return type of a service:
-
-```ts
-import type { RT } from 'gaman/types';
-
-// Instead of:
-type UserServiceType = ReturnType<typeof UserService>;
-
-// Use:
-type UserServiceType = RT<typeof UserService>;
+  };
+});
 ```
 
 ## Multiple Services
 
 ```ts
 import { composeController } from 'gaman/compose';
-import UserService from '../services/UserService';
-import EmailService from '../services/EmailService';
-import type { RT } from 'gaman/types';
+import { UserService } from '../services/UserService';
+import { EmailService } from '../services/EmailService';
 
-export default composeController(
-  (
-    userService: RT<typeof UserService> = UserService(),
-    emailService: RT<typeof EmailService> = EmailService(),
-  ) => ({
+export type Deps = {
+  userService: UserService;
+  emailService: EmailService;
+};
+
+export default composeController(({ userService, emailService }: Deps) => {
+  return {
     async Register(ctx) {
       const body = await ctx.json();
       const user = userService.create(body);
       emailService.sendWelcome(user.email);
-      return Res.send(user, 201);
+      return ctx.send(user).created();
     },
-  }),
-);
+  };
+});
 ```
 
 ## Registering in the Router
 
-Controllers are registered using the **tuple** format `[ControllerFactory, 'MethodName']`:
+Controllers are registered using the **tuple** format `[ControllerFactory, 'MethodName']`. 
+
+> [!IMPORTANT]
+> To provide the dependencies (services) to your controller, you **must** use `r.mountService()` in your router.
 
 ```ts
 import { composeRouter } from 'gaman/compose';
-import UserController from './module/controllers/UserController';
+import UserController from './modules/app/controllers/UserController';
+import { UserService } from './modules/app/services/UserService';
 
 export default composeRouter((r) => {
+  // 1. Provide dependencies
+  r.mountService({
+    userService: UserService(),
+  });
+
+  // 2. Register routes
   r.get('/users', [UserController, 'GetAll']);
   r.get('/users/:id', [UserController, 'GetById']);
-  r.post('/users', [UserController, 'Create']);
-  r.put('/users/:id', [UserController, 'Update']);
-  r.delete('/users/:id', [UserController, 'Delete']);
 });
 ```
 
+For more details on router configuration, see [Router](/docs/overview/routing).
+
 ## Tips
 
-- A single controller file can contain many methods — group them by domain/resource
-- Use `RT<typeof Service>` for type-safe DI
-- Controllers should only contain **handling** logic — put business logic in [Services](/docs/overview/services)
+- A single controller file can contain many methods — group them by domain/resource.
+- Use the `export type Deps = { ... }` pattern for clean and type-safe DI.
+- Destructure your services from the factory function parameter.
+- Controllers should only contain **handling** logic — put business logic in [Services](/docs/overview/services).

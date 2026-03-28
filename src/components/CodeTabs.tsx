@@ -13,85 +13,127 @@ interface FileMap {
 
 const FILES: Record<Section, FileMap> = {
   Entry: {
-    file: "index.ts",
+    file: "src/index.ts",
     lang: "ts",
-    title: "Entry Point",
-    desc: "The main entry file where the GamanJS server is initialized using `defineBootstrap`.",
+    title: "Project Entry",
+    desc: "Orchestrate your entire application using `defineBootstrap`.",
     code: `import { defineBootstrap } from 'gaman';
-import router from './router';
+import AppRouter from './modules/app/AppRouter';
+import { Cors } from "@gaman/cors";
 
 defineBootstrap(async (app) => {
-  app.mount(router);
+  app.mount(Cors());
+  
+  // Mount your feature routes
+  app.mount(AppRouter);
+
+  // Start the engine
   app.mountServer({ http: 3431 });
 });`,
   },
   Router: {
-    file: "router.ts",
+    file: "src/modules/app/AppRouter.ts",
     lang: "ts",
-    title: "Router",
-    desc: "Defines the main routes and connects them with the corresponding controllers.",
+    title: "Modular Routing",
+    desc: "Define clean, traceable routes within your feature modules.",
     code: `import { composeRouter } from 'gaman/compose';
-import AppController from './module/controllers/AppController';
+import AppController from './controllers/AppController';
+import { AppService } from './services/AppService';
+import AppMiddleware from './middlewares/AppMiddleware';
+import { UserRouter } from "../user/UserRouter";
+import { AuthRouter } from "../auth/AuthRouter";
 
 export default composeRouter((r) => {
+  r.mountService({
+    appService: AppService()
+  })
+    .mountMiddleware(AppMiddleware);
+
   r.get('/', [AppController, 'HelloWorld']);
+  
+  
+  /**
+   * Mount your feature routes
+   * modules/
+   *  ├── auth/
+   *  │   ├── controllers/*
+   *  │   ├── services/*
+   *  │   └── AuthRouter.ts
+   *  ├── user/
+   *  │   ├── controllers/*
+   *  │   ├── services/*
+   *  │   └── UserRouter.ts
+   *  └── ...
+   */
+  r.mountRouter(UserRouter);
+  r.mountRouter(AuthRouter);
 });`,
   },
   Controller: {
-    file: "AppController.ts",
+    file: "src/modules/app/controllers/AppController.ts",
     lang: "ts",
-    title: "Controller",
-    desc: "Handles business logic and communicates with services to process and return data.",
+    title: "Logic Controller",
+    desc: "Handle requests using the fluent ctx.send() API and type-safe DI.",
     code: `import { composeController } from 'gaman/compose';
-import AppService from '../services/AppService';
-import type { RT } from 'gaman/types';
+import { AppService } from '../services/AppService';
 
-export default composeController(
-  (appService: RT<typeof AppService> = AppService()) => ({
+export type Deps = {
+  appService: AppService;
+}
+
+export default composeController(({ appService }: Deps) => {
+  // todo your private logic
+  
+  return {
     HelloWorld(ctx) {
-      return Res.message(appService.WelcomeMessage());
+      const message = appService.WelcomeMessage();
+      return ctx.send(message).ok();
     },
-  }),
-);`,
+  }
+});`,
   },
   Service: {
-    file: "AppService.ts",
+    file: "src/modules/app/services/AppService.ts",
     lang: "ts",
-    title: "Service",
-    desc: "Contains reusable functions, core business logic, or external API/database calls.",
+    title: "Stateless Service",
+    desc: "Pure business logic, isolated from the transport layer.",
     code: `import { composeService } from 'gaman/compose';
 
-export default composeService(() => ({
-  WelcomeMessage() {
-    return '❤️ Welcome to GamanJS';
-  },
-}));`,
+export const AppService = composeService(() => {
+  // todo your private logic
+    
+  return {
+    WelcomeMessage() {
+      return '❤️ Built with GamanJS';
+    },
+  }
+});
+
+export type AppService = ReturnType<typeof AppService>;`,
   },
   Middleware: {
-    file: "AppMiddleware.ts",
+    file: "src/modules/app/middlewares/AppMiddleware.ts",
     lang: "ts",
     title: "Middleware",
-    desc: "Executes logic before a request is processed by the controller.",
+    desc: "Intercept and augment the request context seamlessly.",
     code: `import { composeMiddleware } from 'gaman/compose';
 
 export default composeMiddleware(async (ctx, next) => {
-  console.log(\`[\${ctx.request.method}] \${ctx.path}\`);
+  ctx.set('trace_id', crypto.randomUUID());
   return next();
 });`,
   },
   ExceptionHandler: {
     file: "GlobalException.ts",
     lang: "ts",
-    title: "Exception Handler",
-    desc: "GamanJS provides composeException for handling errors globally or per-route.",
+    title: "Global Exception",
+    desc: "Centralized error handling with full context access.",
     code: `import { composeException } from 'gaman/compose';
 
 export default composeException((error, ctx) => {
-  console.error(\`[Error] \${ctx.path}:\`, error.message);
-
-  return Res.send({
+  return ctx.send({
     error: error.message,
-    path: ctx.path,
+    status: 500
   }).internalServerError();
 });`,
   }
@@ -132,59 +174,60 @@ export default function CodeTabs() {
   const Icon = ICONS[active];
 
   return (
-    <div className="relative w-full md:max-w-6xl mx-auto my-8 rounded-xl overflow-hidden shadow-lg shadow-indigo-500/10">
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-500/10 backdrop-blur-xl border border-white/10 rounded-xl" />
-
-      <div className="relative z-10">
-        <div className="flex flex-wrap md:flex-nowrap sm:gap-2 bg-stone-900/70 border-b border-stone-700/50 p-4 backdrop-blur-md relative">
+    <div className="relative w-full md:max-w-6xl mx-auto my-12 rounded-2xl overflow-hidden glass-morphism shadow-2xl">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 backdrop-blur-3xl" />
+      
+      <div className="relative z-10 flex flex-col md:flex-row min-h-[500px]">
+        {/* Left Sidebar Tabs */}
+        <div className="w-full md:w-64 bg-stone-900/40 border-r border-white/5 p-4 space-y-2">
+          <div className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-4 px-2">Components</div>
           {(Object.keys(FILES) as Section[]).map((key) => {
             const TabIcon = ICONS[key];
             return (
-              <div key={key} className="relative">
-                <button
-                  onClick={() => setActive(key)}
-                  className={`flex items-center gap-1 px-4 py-2 text-sm rounded-lg transition-colors font-semibold ${
-                    active === key
-                      ? "bg-blue-500/30 text-blue-300 shadow-inner"
-                      : "text-stone-400 hover:bg-stone-800/40"
-                  }`}
-                >
-                  <TabIcon size={16} />
-                  <span>{key}</span>
-                </button>
-              </div>
+              <button
+                key={key}
+                onClick={() => setActive(key)}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-sm rounded-xl transition-all duration-300 font-medium ${
+                  active === key
+                    ? "bg-blue-500/20 text-blue-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-blue-500/20"
+                    : "text-stone-400 hover:bg-white/5 hover:text-stone-200"
+                }`}
+              >
+                <TabIcon size={18} className={active === key ? "text-blue-400" : "text-stone-500"} />
+                <span>{key === "ExceptionHandler" ? "Exception" : key}</span>
+              </button>
             );
           })}
         </div>
 
-        <div className="px-4 py-3 border-b border-stone-700/40 bg-black/30 backdrop-blur-md">
-          <div className="flex items-center gap-2 text-lg font-semibold text-blue-300">
-            <Icon size={20} />
-            {title}
-          </div>
-          <p className="text-sm text-stone-300 mt-1">{desc}</p>
-        </div>
-
-        {/* Code Block */}
-        <div className="relative bg-black/40 backdrop-blur-lg group">
-          <div className="absolute -top-6 left-4 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-            <div className="relative px-3 py-1 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 border border-white/20 text-xs font-mono text-white text-bold shadow-[0_0_10px_rgba(59,130,246,0.3)] backdrop-blur-md">
-              {FILES[active].file}
-              <span className="absolute left-5 -bottom-1 w-2 h-2 bg-white/10 rotate-45 border-b border-r border-white/20" />
+        {/* Right Content Area */}
+        <div className="flex-1 flex flex-col bg-black/20">
+          <div className="px-8 py-6 border-b border-white/5 bg-white/[0.02]">
+            <div className="flex items-center gap-3 text-xl font-bold text-white mb-2">
+              <Icon size={24} className="text-blue-400" />
+              {title}
             </div>
+            <p className="text-blue-100/60 font-medium">{desc}</p>
           </div>
 
-          <div
-            className="overflow-x-auto font-mono text-sm p-4 text-stone-100"
-            dangerouslySetInnerHTML={{ __html: highlighted }}
-          />
+          <div className="flex-1 relative group bg-stone-950/40">
+            <div className="absolute top-4 right-6 z-20 flex items-center gap-3">
+              <div className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-stone-400">
+                {FILES[active].file}
+              </div>
+              <button
+                className="p-2 rounded-md bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 transition-colors"
+                onClick={() => navigator.clipboard.writeText(FILES[active].code)}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              </button>
+            </div>
 
-          <button
-            className="absolute top-3 right-3 px-3 py-1 text-xs rounded-md bg-stone-800/70 hover:bg-stone-700/80 border border-stone-600/60 transition text-stone-200 backdrop-blur-md"
-            onClick={() => navigator.clipboard.writeText(FILES[active].code)}
-          >
-            Copy
-          </button>
+            <div
+              className="px-8 py-6 font-mono text-[13px] md:text-sm leading-relaxed overflow-x-auto selection:bg-blue-500/30"
+              dangerouslySetInnerHTML={{ __html: highlighted }}
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -7,24 +7,35 @@ Service di GamanJS adalah tempat untuk **business logic** aplikasi. Service dibu
 
 ## Membuat Service
 
+Pola yang direkomendasikan adalah meng-export instance service sebagai konstanta dan meng-export tipe kembaliannya (return type) untuk memudahkan dependency injection di controller.
+
 ```ts
-// src/module/services/AppService.ts
+// src/modules/app/services/AppService.ts
 import { composeService } from 'gaman/compose';
+import type { RT } from 'gaman/types';
 
-export default composeService(() => ({
-  WelcomeMessage() {
-    return '❤️ Welcome to GamanJS';
-  },
-}));
+export const AppService = composeService(() => {
+  /**
+   * Kamu bisa meletakkan logika private, state, atau koneksi database di sini
+   */
+  
+  return {
+    WelcomeMessage() {
+      return '❤️ Welcome to GamanJS';
+    },
+  };
+});
+
+// Export tipe kembalian dari service
+export type AppService = RT<typeof AppService>;
 ```
-
-`composeService` menerima factory function yang mengembalikan object berisi method-method logic.
 
 ## Contoh: User Service
 
 ```ts
-// src/module/services/UserService.ts
+// src/modules/app/services/UserService.ts
 import { composeService } from 'gaman/compose';
+import type { RT } from 'gaman/types';
 
 interface User {
   id: number;
@@ -34,31 +45,27 @@ interface User {
 
 const users: User[] = [
   { id: 1, name: 'Angga', email: 'angga@example.com' },
-  { id: 2, name: 'Budi', email: 'budi@example.com' },
 ];
 
-export default composeService(() => ({
-  findAll(): User[] {
-    return users;
-  },
+export const UserService = composeService(() => {
+  return {
+    findAll(): User[] {
+      return users;
+    },
 
-  findById(id: number): User | undefined {
-    return users.find((u) => u.id === id);
-  },
+    findById(id: number): User | undefined {
+      return users.find((u) => u.id === id);
+    },
 
-  create(data: Omit<User, 'id'>): User {
-    const newUser = { ...data, id: users.length + 1 };
-    users.push(newUser);
-    return newUser;
-  },
+    create(data: Omit<User, 'id'>): User {
+      const newUser = { ...data, id: users.length + 1 };
+      users.push(newUser);
+      return newUser;
+    },
+  };
+});
 
-  delete(id: number): boolean {
-    const idx = users.findIndex((u) => u.id === id);
-    if (idx === -1) return false;
-    users.splice(idx, 1);
-    return true;
-  },
-}));
+export type UserService = RT<typeof UserService>;
 ```
 
 ## Service dengan Dependency
@@ -66,61 +73,50 @@ export default composeService(() => ({
 Service juga bisa menerima dependency dari service lain:
 
 ```ts
-// src/module/services/EmailService.ts
-import { composeService } from 'gaman/compose';
-
-export default composeService(() => ({
-  sendWelcome(email: string) {
-    console.log(`Sending welcome email to ${email}`);
-  },
-
-  sendResetPassword(email: string, token: string) {
-    console.log(`Sending reset password email to ${email}`);
-  },
-}));
-```
-
-```ts
-// src/module/services/AuthService.ts
+// src/modules/app/services/AuthService.ts
 import { composeService } from 'gaman/compose';
 import type { RT } from 'gaman/types';
-import EmailService from './EmailService';
+import { EmailService } from './EmailService';
 
-export default composeService(
-  (emailService: RT<typeof EmailService> = EmailService()) => ({
-    register(name: string, email: string) {
-      // ... register logic
-      emailService.sendWelcome(email);
-      return { name, email };
-    },
-
-    resetPassword(email: string) {
-      const token = crypto.randomUUID();
-      emailService.sendResetPassword(email, token);
-    },
-  }),
+export const AuthService = composeService(
+  (emailService: RT<typeof EmailService> = EmailService()) => {
+    return {
+      register(name: string, email: string) {
+        // ... logika pendaftaran
+        emailService.sendWelcome(email);
+        return { name, email };
+      },
+    };
+  }
 );
+
+export type AuthService = RT<typeof AuthService>;
 ```
 
 ## Menggunakan di Controller
 
+Saat menggunakan service di controller, gunakan pola destrukturisasi yang direkomendasikan dengan tipe `Deps`.
+
 ```ts
 import { composeController } from 'gaman/compose';
-import UserService from '../services/UserService';
-import type { RT } from 'gaman/types';
+import { UserService } from '../services/UserService';
 
-export default composeController(
-  (userService: RT<typeof UserService> = UserService()) => ({
-    GetAll(ctx) {
-      return Res.send(userService.findAll());
-    },
-  }),
-);
+export type Deps = {
+  userService: UserService;
+};
+
+export default composeController(({ userService }: Deps) => ({
+  GetAll(ctx) {
+    const users = userService.findAll();
+    return ctx.send(users).ok();
+  },
+}));
 ```
 
 ## Tips
 
-- Service **tidak** memiliki akses ke `ctx` — ini disengaja agar logic tidak bergantung pada HTTP
-- Satu service bisa dipakai oleh banyak controller
-- Service bisa saling bergantung satu sama lain
-- Pisahkan concern: Service = business logic, Controller = HTTP handling
+- Service **tidak** memiliki akses ke `ctx` — ini disengaja agar logic tidak bergantung pada HTTP.
+- Satu service bisa dipakai oleh banyak controller.
+- Service bisa saling bergantung satu sama lain.
+- Gunakan `export type Name = RT<typeof Name>` agar DI menjadi bersih dan type-safe.
+- Pisahkan concern: Service = business logic, Controller = HTTP handling.

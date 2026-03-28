@@ -3,16 +3,11 @@ title: CORS
 description: "@gaman/cors adalah **middleware resmi** untuk menangani **CORS (Cross-Origin Resource Sharing)** di framework **GamanJS**. CORS dibutuhkan ketika aplikasi web frontend (misalnya React, Vue, Svelte, dsb) melakukan request ke server API yang domain/port-nya berbeda."
 ---
 
-`@gaman/cors` adalah **middleware resmi** untuk menangani **CORS (Cross-Origin Resource Sharing)** di framework **GamanJS**.  
-CORS dibutuhkan ketika aplikasi web frontend (misalnya React, Vue, Svelte, dsb) melakukan request ke server API yang domain/port-nya berbeda.  
+Package `@gaman/cors` menyediakan middleware untuk Cross-Origin Resource Sharing (CORS), memungkinkan kamu mengontrol domain mana yang dapat mengakses API kamu.
 
-Tanpa CORS, browser akan memblokir request lintas-origin tersebut karena alasan keamanan.
-
-## Install
+## Instalasi
 
 import { PackageManagers } from "starlight-package-managers";
-
-GamanJS adalah kerangka kerja untuk aplikasi backend, Anda dapat menginstall menggunakan manajer paket favorit Anda:
 
 <PackageManagers
   pkg="@gaman/cors"
@@ -20,44 +15,37 @@ GamanJS adalah kerangka kerja untuk aplikasi backend, Anda dapat menginstall men
   type="install"
 />
 
-## Cara Pakai
+## Penggunaan
 
-berikut adalah cara implementasi `@gaman/cors`
-
-```ts
-// index.ts
-import { cors } from "@gaman/cors"
-
-defineBootstrap((app) => {
-  app.mount(
-    cors({ origin: '*' })
-  )
-
-  ...
-})
-```
-
-jika ingin spesifik ke route tertentu tinggal implementasi seperti berikut
+Daftarkan middleware CORS secara global di file bootstrap kamu menggunakan `app.mount()`:
 
 ```ts
-// AppRoutes.ts
-import { cors } from "@gaman/cors"
+import { defineBootstrap } from 'gaman';
+import { Cors } from '@gaman/cors';
 
-route.get('/user').middleware(cors())
+defineBootstrap(async (app) => {
+  // Gunakan konfigurasi default
+  app.mount(Cors());
+  
+  // Atau dengan konfigurasi kustom
+  app.mount(Cors({
+    origin: 'https://example.com',
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  }));
+
+  app.mountServer({ http: 3431 });
+});
 ```
 
-## Config
+## Opsi Konfigurasi
 
-Disini banyak configurasi untuk `@gaman/cors` ini, berikut adalah penjelasannya
-
-| Nama             | Tipe                 | Default                                               | Deskripsi |
-|------------------|----------------------|-------------------------------------------------------|-----------|
-| `origin`         | `string \| string[]` | `"*"`                                                 | Domain asal yang diizinkan. Bisa berupa string tunggal atau array. |
-| `allowMethods`   | `string[]`           | `["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"]` | Method HTTP yang diizinkan. |
-| `allowHeaders`   | `string[] \| null`   | `null`                                                | Header yang diizinkan. `null` berarti semua header diizinkan. |
-| `maxAge`         | `number`             | `undefined`                                           | Waktu cache preflight dalam detik. |
-| `credentials`    | `boolean`            | `false`                                               | Apakah mengizinkan kredensial (cookie, autentikasi HTTP, dll.). |
-| `exposeHeaders`  | `string[]`           | `[]`                                                  | Header yang dapat diekspos ke client. |
-
-
-Dan ada 3 lagi config bawaan middleware silakan cek halaman berikut [Middleware Config](/docs/overview/middlewares/#middleware-config).
+| Opsi | Tipe | Default | Deskripsi |
+|------|------|---------|-----------|
+| `origin` | `string \| string[] \| null` | `"*"` | Origin yang diizinkan |
+| `allowMethods` | `string[]` | `["GET", "HEAD", ...]` | HTTP method yang diizinkan |
+| `allowHeaders` | `string[]` | `["Content-Type", ...]` | Header request yang diizinkan |
+| `exposeHeaders` | `string[]` | `[]` | Header yang diekspos ke klien |
+| `maxAge` | `number` | `86400` | Umur simpan cache preflight (detik) |
+| `credentials` | `boolean` | `false` | Izinkan kredensial (cookies, dll.) |

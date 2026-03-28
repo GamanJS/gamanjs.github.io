@@ -3,7 +3,7 @@ title: Context
 description: Every handler and middleware in GamanJS receives a ctx (Context) object containing all request information and utilities.
 ---
 
-Every handler and middleware in GamanJS receives a `ctx` (Context) object containing all request information and utilities for accessing data.
+Every handler and middleware in GamanJS receives a `ctx` (Context) object containing all request information and utilities for accessing data and sending responses.
 
 ## Core Properties
 
@@ -50,7 +50,7 @@ Get a single route parameter:
 // Route: /users/:id
 r.get('/users/:id', (ctx) => {
   const id = ctx.param('id'); // '123'
-  return Res.send({ id });
+  return ctx.send({ id }).ok();
 });
 ```
 
@@ -96,7 +96,7 @@ Parse body as JSON:
 async Create(ctx) {
   const body = await ctx.json<{ name: string; email: string }>();
   // body.name, body.email
-  return Res.send(body, 201);
+  return ctx.send(body).created();
 }
 ```
 
@@ -107,25 +107,17 @@ Read body as plain text:
 ```ts
 async Webhook(ctx) {
   const raw = await ctx.text();
-  return Res.message('OK');
-}
-```
-
-### `ctx.formData()`
-
-Parse body as FormData (multipart or URL-encoded):
-
-```ts
-async Upload(ctx) {
-  const form = await ctx.formData();
-  const name = form.get('name');
-  // ...
+  return ctx.send({ message: 'OK' }).ok();
 }
 ```
 
 ---
 
-## Form Shortcuts
+## Form Data & Files
+
+### `ctx.formData()`
+
+Parse body as FormData (supports `multipart/form-data` and `application/x-www-form-urlencoded`).
 
 ### `ctx.input(name)`
 
@@ -149,13 +141,6 @@ Get a single file from form data:
 
 ```ts
 const avatar = await ctx.file('avatar'); // GFile | null
-
-if (avatar) {
-  avatar.name;     // original file name
-  avatar.type;     // MIME type
-  avatar.size;     // size in bytes
-  // ...
-}
 ```
 
 ### `ctx.files(name)`
@@ -172,11 +157,10 @@ const images = await ctx.files('images'); // GFile[]
 
 ### `ctx.header(key)`
 
-Get a specific header value (case-insensitive):
+Get a specific request header value (case-insensitive):
 
 ```ts
 const token = ctx.header('Authorization'); // string | null
-const contentType = ctx.header('Content-Type');
 ```
 
 ### `ctx.headers`
@@ -197,10 +181,14 @@ ctx.headers.set('X-Custom-Header', 'value');
 
 ### `ctx.cookies`
 
-Bun's `CookieMap` instance for accessing cookies:
+Bun's `CookieMap` instance for accessing and setting cookies:
 
 ```ts
+// Read
 const session = ctx.cookies.get('session_id');
+
+// Set
+ctx.cookies.set('session_id', 'abc-123', { httpOnly: true });
 ```
 
 ---
@@ -209,30 +197,23 @@ const session = ctx.cookies.get('session_id');
 
 Middleware and handlers can share data via the context store:
 
-### `ctx.set(key, value)`
+### `ctx.set(key, value)` / `ctx.get<T>(key)`
 
 ```ts
 ctx.set('user', { id: 1, name: 'Angga' });
+const user = ctx.get('user');
 ```
 
-### `ctx.get<T>(key)`
+---
+
+## Response
+
+### `ctx.send(data?, status?)`
+
+The primary way to send responses. Returns a [GamanResponseBuilder](/docs/overview/responses).
 
 ```ts
-const user = ctx.get<{ id: number; name: string }>('user');
-```
-
-### `ctx.has(key)`
-
-```ts
-if (ctx.has('user')) {
-  // user was set by middleware
-}
-```
-
-### `ctx.delete(key)`
-
-```ts
-ctx.delete('tempData');
+return ctx.send({ success: true }).ok();
 ```
 
 ---
@@ -240,7 +221,7 @@ ctx.delete('tempData');
 ## Full Example
 
 ```ts
-export default composeController(() => ({
+export default (userService) => ({
   async CreatePost(ctx) {
     // Route params
     const userId = ctx.param('userId');
@@ -249,23 +230,23 @@ export default composeController(() => ({
     const draft = ctx.query.draft === 'true';
 
     // Body
-    const body = await ctx.json<{
-      title: string;
-      content: string;
-    }>();
+    const body = await ctx.json<{ title: string }>();
 
     // Headers
     const token = ctx.header('Authorization');
 
+    // Set response header
+    ctx.headers.set('X-Processed-By', 'GamanJS');
+
     // Data from middleware
     const currentUser = ctx.get('user');
 
-    return Res.send({
+    return ctx.send({
       userId,
       draft,
       title: body.title,
       author: currentUser.name,
-    }, 201);
+    }).created();
   },
-}));
+});
 ```

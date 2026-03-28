@@ -8,9 +8,9 @@ GamanJS menggunakan `composeRouter` untuk mendefinisikan semua route aplikasi se
 ## Penggunaan Dasar
 
 ```ts
-// src/router.ts
+// src/modules/app/AppRoutes.ts
 import { composeRouter } from 'gaman/compose';
-import AppController from './module/controllers/AppController';
+import AppController from './controllers/AppController';
 
 export default composeRouter((r) => {
   r.get('/', [AppController, 'HelloWorld']);
@@ -49,14 +49,14 @@ Handler bisa berupa **function** langsung atau **tuple Controller**:
 
 ```ts
 r.get('/ping', (ctx) => {
-  return Res.message('pong');
+  return ctx.send('pong').ok();
 });
 ```
 
 ### Controller Handler (Rekomendasi)
 
 ```ts
-import UserController from './module/controllers/UserController';
+import UserController from './controllers/UserController';
 
 r.get('/users', [UserController, 'GetAll']);
 r.get('/users/:id', [UserController, 'GetById']);
@@ -103,7 +103,7 @@ Route yang dihasilkan:
 Tambahkan middleware per-route menggunakan chaining `.middleware()`:
 
 ```ts
-import AuthMiddleware from './module/middlewares/AuthMiddleware';
+import AuthMiddleware from './middlewares/AuthMiddleware';
 
 export default composeRouter((r) => {
   // Route tanpa middleware
@@ -139,20 +139,53 @@ Override error handling per-route:
 import { composeException } from 'gaman/compose';
 
 const CustomErrorHandler = composeException((error, ctx) => {
-  return Res.send({ detail: error.message }, 500);
+  return ctx.send({ detail: error.message }).error();
 });
 
 r.get('/risky', [AppController, 'Risky'])
   .exception(CustomErrorHandler);
 ```
 
-## Route Naming
+## Global Router Hooks
 
-Beri nama route untuk referensi:
+Kamu bisa mendaftarkan middleware atau exception handler global khusus untuk satu router:
 
 ```ts
-r.get('/users/:id', [UserController, 'GetById'])
-  .name('users.show');
+export default composeRouter((r) => {
+  r.mountMiddleware(LogMiddleware());
+  r.mountException(CustomErrorHandler);
+  
+  r.get('/', [AppController, 'render']);
+});
+```
+
+## Mounting Router Eksternal
+
+```ts
+import UserRouter from '../user/UserRoutes';
+
+export default composeRouter((r) => {
+  r.mountRouter('/users', UserRouter);
+});
+```
+
+## Service Injection
+
+Kamu bisa menyuntikkan (inject) service ke dalam controller menggunakan `r.mountService()`. Service ini akan diteruskan ke factory function controller.
+
+```ts
+import { composeRouter } from 'gaman/compose';
+import { AppService } from './services/AppService';
+import AppController from './controllers/AppController';
+
+export default composeRouter((r) => {
+  // Inject service
+  r.mountService({
+    appService: AppService(),
+  });
+
+  r.get('/', [AppController, 'render']);
+});
 ```
 
 ## Chaining Lengkap

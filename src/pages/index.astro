@@ -37,14 +37,13 @@ import { features, plugins } from "../utils/content";
     </script>
   </head>
   <body class="bg-bg-primary text-blue-100 relative overflow-x-hidden">
+    <!-- START: GRID BACKGROUND -->
+    <div class="fixed inset-0 z-[-1] pointer-events-none opacity-[0.03]" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 40px 40px;"></div>
+    
     <Navbar />
-
-    <main class="backdrop-blur-[2px]">
+    <main class="relative">
       <HeroSection client:load />
-
-      <!-- END: Hero Content -->
-
-      <!-- START: CODE TABS DEMO -->
+ <!-- START: CODE TABS DEMO -->
       <section class="relative py-10 px-4">
         <div class="max-w-6xl mx-auto">
           <h3
@@ -72,158 +71,157 @@ import { features, plugins } from "../utils/content";
         </div>
       </section>
 
-      <section class="relative py-16 px-4 bg-bg-primary/40 backdrop-blur-sm">
-        <div
-          class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-10 items-start"
-        >
-          <!-- Left: Section Title -->
-          <div class="space-y-4">
-            <h3
-              class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-500 to-indigo-400 bg-clip-text text-transparent"
-            >
-              Enterprise-Grade Performance Metrics
-            </h3>
-            <p class="text-text-primary leading-relaxed">
-              Built for heavy-duty workloads, <span class="text-blue-300 font-semibold"
-                >GamanJS</span
-              >
-              outperforms traditional frameworks by maintaining a lean, minimal footprint while maximizing request throughput and raw execution speed.
-            </p>
+      <!-- START: FEATURE SHOWCASE -->
+      <section class="relative py-24 px-4 overflow-hidden">
+        <div class="max-w-6xl mx-auto">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div>
+              <h3 class="text-4xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-white bg-clip-text text-transparent">
+                Modular by Design
+              </h3>
+              <p class="text-lg text-blue-100/70 leading-relaxed mb-8">
+                GamanJS enforces a <span class="text-blue-300 font-semibold">feature-first</span> structure. 
+                Keep your logic isolated, your controllers clean, and your scaling predictable.
+              </p>
+              
+              <div class="space-y-6">
+                <div class="flex gap-4 items-start">
+                  <div class="p-2 rounded-lg bg-blue-500/20 border border-blue-500/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                  </div>
+                  <div>
+                    <h4 class="text-lg font-bold text-white mb-1">Encapsulated Modules</h4>
+                    <p class="text-blue-100/60 font-medium">Group logic by features, not layers. Scalability starts with boundaries.</p>
+                  </div>
+                </div>
+                
+                <div class="flex gap-4 items-start">
+                  <div class="p-2 rounded-lg bg-indigo-500/20 border border-indigo-500/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                  </div>
+                  <div>
+                    <h4 class="text-lg font-bold text-white mb-1">Functional Composition</h4>
+                    <p class="text-blue-100/60 font-medium">Compose your backend with pure functions. No hidden state, no complex classes.</p>
+                  </div>
+                </div>
 
-            <p class="text-xs text-stone-500 italic mt-6">
-              *Based on internal benchmarks using identical test environments
-              and workloads.
-            </p>
-          </div>
-
-          <!-- Right: Comparison Bars -->
-          <div class="space-y-8">
-            <!-- GamanJS -->
+                <div class="flex gap-4 items-start">
+                  <div class="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                  </div>
+                  <div>
+                    <h4 class="text-lg font-bold text-white mb-1">Type-Safe DI</h4>
+                    <p class="text-blue-100/60 font-medium">First-class support for dependency injection through simple function destructuring.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <div class="relative group">
-              <div class="flex justify-between mb-2 text-sm font-mono">
-                <span class="text-blue-200 font-semibold">⚡ GamanJS</span>
-                <span class="text-blue-400 font-semibold">Fastest</span>
-              </div>
-              <div
-                class="w-full h-4 bg-white/10 rounded-full overflow-hidden relative"
-              >
-                <div
-                  class="h-full bg-gradient-to-r from-pink-400 via-purple-400 to-pink-400 rounded-full w-[85%] shadow-[0_0_15px_rgba(236,72,153,0.6)] animate-pulse"
-                >
+              <div class="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+              <div class="relative bg-stone-900 border border-white/10 rounded-2xl p-8 shadow-2xl backdrop-blur-xl">
+                <div class="flex items-center gap-2 mb-6">
+                  <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                  <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                  <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                  <span class="ml-4 text-stone-500 font-mono text-sm">src/modules/billing/</span>
+                </div>
+                <div class="font-mono text-sm space-y-3">
+                  <div class="flex gap-3 text-stone-400">
+                    <span class="text-blue-400">├──</span>
+                    <span>controllers/BillingController.ts</span>
+                  </div>
+                  <div class="flex gap-3 text-stone-400">
+                    <span class="text-blue-400">├──</span>
+                    <span>services/TaxService.ts</span>
+                  </div>
+                  <div class="flex gap-3 text-stone-400">
+                    <span class="text-blue-400">├──</span>
+                    <span>middlewares/AuditLog.ts</span>
+                  </div>
+                  <div class="flex gap-3 text-stone-400">
+                    <span class="text-blue-400">└──</span>
+                    <span class="text-indigo-300">BillingRoutes.ts</span>
+                  </div>
+                </div>
+                <div class="mt-8 pt-6 border-t border-white/5">
+                  <p class="text-blue-100/60 text-sm leading-relaxed">
+                    Designed for teams who value <span class="text-white">clarity</span> over <span class="text-white">magic</span>. 
+                    Every dependency is explicit, every route is traceable.
+                  </p>
                 </div>
               </div>
-              <p class="text-text-primary text-sm mt-2">
-                Lean, modular, and purely functional — engineered specifically for maximum throughput.
-              </p>
-            </div>
-
-            <!-- NestJS -->
-            <div class="relative">
-              <div class="flex justify-between mb-2 text-sm font-mono">
-                <span class="text-stone-300">NestJS</span>
-                <span class="text-text-primary">Balanced</span>
-              </div>
-              <div class="w-full h-4 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  class="h-full bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-full w-[70%]"
-                >
-                </div>
-              </div>
-              <p class="text-text-primary text-sm mt-2">
-                OOP-based and well-structured, but introduces runtime overhead.
-              </p>
-            </div>
-
-            <!-- AdonisJS -->
-            <div class="relative">
-              <div class="flex justify-between mb-2 text-sm font-mono">
-                <span class="text-stone-300">AdonisJS</span>
-                <span class="text-text-primary">Feature-rich</span>
-              </div>
-              <div class="w-full h-4 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  class="h-full bg-gradient-to-r from-blue-800 to-indigo-900 rounded-full w-[50%]"
-                >
-                </div>
-              </div>
-              <p class="text-text-primary text-sm mt-2">
-                Complete ecosystem and full-stack tools — trades off performance
-                for convenience.
-              </p>
             </div>
           </div>
-        </div>
-
-        <!-- Soft Glow -->
-        <div
-          class="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-blue-500/10 to-transparent blur-3xl"
-        >
-        </div>
-        <div
-          class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[90%] h-px bg-gradient-to-r from-transparent via-blue-500/40 to-transparent"
-        >
         </div>
       </section>
+
+      <!-- START: CTA SECTION -->
+      <section class="relative py-12 px-4">
+        <div class="max-w-4xl mx-auto text-center py-16 px-8 rounded-3xl bg-gradient-to-b from-blue-500/10 to-indigo-500/5 border border-white/5 backdrop-blur-md">
+          <h2 class="text-3xl md:text-5xl font-bold text-white mb-6">
+            Ready to Build at Scale?
+          </h2>
+          <p class="text-xl text-blue-100/70 mb-10 max-w-2xl mx-auto">
+            Experience the logic-first framework that doesn't get in your way. 
+            Light as a ghost, solid as a rock.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/docs/overview/first-steps" class="px-8 py-4 rounded-xl bg-blue-500 hover:bg-blue-400 text-white font-bold transition-all shadow-lg shadow-blue-500/20">
+              Get Started for Free
+            </a>
+            <a href="https://github.com/7TogkID/gaman" target="_blank" class="px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold transition-all">
+              View on GitHub
+            </a>
+          </div>
+        </div>
+      </section>
+
       <section class="relative py-16 px-4 bg-bg-primary/40 backdrop-blur-sm">
         <div class="max-w-6xl mx-auto">
           <GamanLivePreview client:load />
         </div>
       </section>
 
-      <section
-        class="py-16 px-6 bg-gradient-to-b from-indigo-500/10 to-transparent relative"
-      >
-        <div
-          class="absolute top-0 left-1/2 -translate-x-1/2 w-[90%] h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent"
-        >
-        </div>
-        <div class="max-w-6xl mx-auto text-center">
-          <h3
-            class="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-500 to-indigo-400 bg-clip-text text-transparent"
-          >
-            Contributors
-          </h3>
-          <p class="text-text-primary mb-10">
-            These amazing developers have helped shape GamanJS and its
-            documentation.
-          </p>
-          <Contributors client:load />
-        </div>
-      </section>
 
       <!-- START: Key Features -->
-      <!-- <section class="relative">
-        <div class="container relative z-10">
-          <h2 class="section-title max-w-2xl mx-auto text-center">
+      <section class="relative py-24">
+        <div class="max-w-6xl mx-auto px-6 relative z-10">
+          <h2 class="text-4xl md:text-5xl font-bold text-center mb-6">
             Why <span
-              class="from-blue-500 to-indigo-400 bg-gradient-to-r bg-clip-text text-transparent"
-              >Developers</span
+              class="from-blue-400 to-indigo-300 bg-gradient-to-r bg-clip-text text-transparent"
+              >Modern Teams</span
             >
             Choose <span
-              class="from-purple-400 to-pink-400 bg-gradient-to-r bg-clip-text text-transparent"
+              class="from-white via-blue-100 to-blue-200 bg-gradient-to-r bg-clip-text text-transparent"
               >GamanJS</span
             >
           </h2>
 
-          <p class="section-subtitle text-center max-w-lg mx-auto mt-6">
+          <p class="text-xl text-blue-100/60 text-center max-w-2xl mx-auto mb-16">
             {features.description}
           </p>
 
           <div
-            class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-10"
+            class="grid grid-cols-1 md:grid-cols-2 gap-8"
           >
             {
               features.items.map((item) => {
                 const Icon = item.icon;
 
                 return (
-                  <div class="card gap-4">
-                    <Icon class=" text-purple-400" />
-                    <div>
-                      <h3 class="text-xl md:text-2xl font-semibold mb-4">
-                        {item.title}
-                      </h3>
-                      <p>{item.text}</p>
+                  <div class="group relative p-8 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-blue-500/30 transition-all duration-500 overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div class="relative flex gap-6 items-start">
+                      <div class="p-3 rounded-xl bg-blue-500/20 text-blue-400 group-hover:scale-110 transition-transform duration-500">
+                        <Icon class="w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 class="text-2xl font-bold text-white mb-2">
+                          {item.title}
+                        </h3>
+                        <p class="text-blue-100/70 leading-relaxed">{item.text}</p>
+                      </div>
                     </div>
                   </div>
                 );
@@ -233,105 +231,72 @@ import { features, plugins } from "../utils/content";
         </div>
 
         <div
-          class="absolute bottom-0 left-0 w-80 h-72 bg-gradient-to-br from-purple-500 to-pink-500 opacity-20 blur-3xl animate-pulse"
+          class="absolute top-1/2 left-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] -translate-y-1/2"
         >
         </div>
-      </section> -->
+      </section>
       <!-- END: Key Features -->
 
       <!-- START: Plugins -->
-      <!-- <section class="relative">
-        <div class="container relative z-10">
-          <h2 class="section-title text-center max-w-2xl mx-auto">
-            Extend <span
-              class="from-blue-500 to-indigo-400 bg-gradient-to-r bg-clip-text text-transparent"
-              >GamanJS</span
-            >
-            without touching <span
-              class="from-purple-400 to-pink-400 bg-gradient-to-r bg-clip-text text-transparent"
-              >the core</span
+      <!-- <section class="relative py-24 bg-white/[0.01]">
+        <div class="max-w-6xl mx-auto px-6 relative z-10">
+          <h2 class="text-4xl md:text-5xl font-bold text-center mb-6">
+            Everything You Need, <span
+              class="from-indigo-400 to-purple-400 bg-gradient-to-r bg-clip-text text-transparent"
+              >Zero Bloat</span
             >
           </h2>
 
-          <p class="section-subtitle text-center max-w-lg mx-auto mt-6">
-            {plugins.description}
+          <p class="text-xl text-blue-100/60 text-center max-w-2xl mx-auto mb-16">
+            Official plugins for common use cases. Simple, documented, and modular.
           </p>
 
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mt-10">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {
               plugins.items.map((item) => {
                 const Icon = item.icon;
 
                 return (
-                  <div class="group relative p-4 md:p-6 rounded-2xl bg-gradient-to-br from-pink-500/5 to-purple-500/5 border border-white/5 hover:border-pink-500/20 transition-all duration-500 hover:shadow-lg hover:shadow-pink-500/10 overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-3xl transform scale-150 group-hover:scale-100" />
-
-                    <div class="relative group/icon w-full flex flex-col items-center md:flex-row md:items-center md:gap-6 mb-5">
-                      <div class="flex items-center justify-center w-16 h-16 md:w-14 md:h-14 rounded-xl bg-gradient-to-br from-pink-400/40 to-purple-400/30 md:shrink-0 mx-auto md:mx-0 group-hover:scale-110 transition-all duration-500 group-hover:shadow-lg group-hover:shadow-pink-500/20">
-                        <Icon class="w-8 h-8 md:w-6 md:h-6 text-indigo-300 group-hover:text-blue-300 transition-colors duration-300" />
+                  <div class="group relative p-6 rounded-2xl bg-stone-900/50 border border-white/5 hover:border-indigo-500/30 transition-all duration-500">
+                    <div class="flex items-center gap-4 mb-4">
+                      <div class="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 group-hover:text-blue-300 transition-colors">
+                        <Icon class="w-6 h-6" />
                       </div>
-
-                      <div class="mt-3 text-center md:mt-0 md:text-left w-full">
-                        <div class="text-sm md:text-base font-semibold text-white/90">
-                          {item.title}
-                        </div>
-                      </div>
-
-                      <div class="mobile-popup md:hidden fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-[340px] opacity-0 scale-95 transition-all duration-300 z-[9999] pointer-events-none">
-                        <div class="bg-gradient-to-br from-pink-500/30 to-purple-500/30 p-6 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-white/20 backdrop-blur-2xl">
-                          <div class="flex items-center gap-4 mb-4">
-                            <div class="p-3 bg-gradient-to-br from-pink-400/30 to-purple-400/30 backdrop-blur-md rounded-lg">
-                              <Icon class="text-white w-7 h-7" />
-                            </div>
-
-                            <div class="text-white text-lg font-semibold tracking-wide">
-                              {item.title}
-                            </div>
-                            <button
-                              class="ml-auto text-white/60 hover:text-white p-1"
-                              onclick="event.stopPropagation(); this.closest('.mobile-popup').classList.remove('active'); document.body.style.overflow = ''"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="w-5 h-5"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                              >
-                                <path
-                                  fill-rule="evenodd"
-                                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                  clip-rule="evenodd"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                          <div class="text-white/95 text-lg leading-relaxed tracking-wide">
-                            {item.text}
-                          </div>
-                        </div>
-                      </div>
+                      <h4 class="text-lg font-bold text-white/90">
+                        {item.title}
+                      </h4>
                     </div>
-
-                    <div class="hidden md:block relative mt-0 md:mt-0 transition-all duration-500 group-hover:translate-y-[-4px]">
-                      <p class="text-gray-400 group-hover:text-blue-100 transition-colors duration-500 md:pl-0">
-                        {item.text}
-                      </p>
-                    </div>
-
-                    <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-500/10 to-purple-500/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div class="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-indigo-500/10 to-pink-500/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <p class="text-sm text-blue-100/50 leading-relaxed">
+                      {item.text}
+                    </p>
                   </div>
                 );
               })
             }
           </div>
         </div>
-        <div
-          class="absolute bottom-0 right-0 w-80 h-72 bg-gradient-to-br from-purple-500 to-pink-500 opacity-20 blur-3xl animate-pulse"
-        >
-        </div>
       </section> -->
       <!-- END: Plugins -->
+
+
+
+      <section
+        class="py-24 px-6 relative overflow-hidden"
+      >
+        <div class="max-w-6xl mx-auto text-center relative z-10">
+          <h3
+            class="text-4xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent"
+          >
+            Built by Developers, for Developers
+          </h3>
+          <p class="text-xl text-blue-100/60 mb-12 max-w-2xl mx-auto">
+            GamanJS is an open-source project shaped by community contributions.
+          </p>
+          <Contributors client:load />
+        </div>
+        
+        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+      </section>
     </main>
   </body>
 

@@ -19,14 +19,15 @@ Perintah ini akan men-generate project baru dengan struktur berikut:
 my-app/
 ├── src/
 │   ├── index.ts                      # Entry point & bootstrap
-│   ├── router.ts                     # Definisi route
-│   └── module/
-│       ├── controllers/
-│       │   └── AppController.ts      # Controller contoh
-│       ├── services/
-│       │   └── AppService.ts         # Service contoh
-│       └── middlewares/
-│           └── AppMiddleware.ts      # Middleware contoh
+│   └── modules/
+│       └── app/
+│           ├── controllers/
+│           │   └── AppController.ts      # Controller contoh
+│           ├── services/
+│           │   └── AppService.ts         # Service contoh
+│           ├── middlewares/
+│           │   └── AppMiddleware.ts      # Middleware contoh
+│           └── AppRoutes.ts              # Definisi route
 ├── package.json
 └── tsconfig.json
 ```
@@ -42,14 +43,14 @@ bun add gaman @gaman/michi
 ## Menjalankan Server
 
 ```bash
-bun run dev
+bun run src/index.ts
 ```
 
 Output:
 
 ```
 GamanJS Framework v2
-A Lean Framework for Heavy-Duty Enterprise Performance.
+A Lean Framework for Enterprise Scalability.
  ──────────────────────────────────────
 HTTP  : Listening at http://localhost:3431
  ──────────────────────────────────────

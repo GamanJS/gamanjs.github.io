@@ -8,9 +8,9 @@ GamanJS uses `composeRouter` to declaratively define all application routes. The
 ## Basic Usage
 
 ```ts
-// src/router.ts
+// src/modules/app/AppRoutes.ts
 import { composeRouter } from 'gaman/compose';
-import AppController from './module/controllers/AppController';
+import AppController from './controllers/AppController';
 
 export default composeRouter((r) => {
   r.get('/', [AppController, 'HelloWorld']);
@@ -49,14 +49,14 @@ A handler can be a **function** directly or a **Controller tuple**:
 
 ```ts
 r.get('/ping', (ctx) => {
-  return Res.message('pong');
+  return ctx.send({ message: 'pong' }).ok();
 });
 ```
 
 ### Controller Handler (Recommended)
 
 ```ts
-import UserController from './module/controllers/UserController';
+import UserController from './controllers/UserController';
 
 r.get('/users', [UserController, 'GetAll']);
 r.get('/users/:id', [UserController, 'GetById']);
@@ -103,7 +103,7 @@ Resulting routes:
 Add per-route middleware using `.middleware()` chaining:
 
 ```ts
-import AuthMiddleware from './module/middlewares/AuthMiddleware';
+import AuthMiddleware from './middlewares/AuthMiddleware';
 
 export default composeRouter((r) => {
   // Route without middleware
@@ -139,21 +139,56 @@ Override error handling for specific routes:
 import { composeException } from 'gaman/compose';
 
 const CustomErrorHandler = composeException((error, ctx) => {
-  return Res.send({ detail: error.message }, 500);
+  return ctx.send({ detail: error.message }).error();
 });
 
 r.get('/risky', [AppController, 'Risky'])
   .exception(CustomErrorHandler);
 ```
 
-## Route Naming
+## Global Router Hooks
 
-Give routes a name for reference:
+You can mount global middleware or exception handlers specifically for a router:
 
 ```ts
-r.get('/users/:id', [UserController, 'GetById'])
-  .name('users.show');
+export default composeRouter((r) => {
+  r.mountMiddleware(LogMiddleware());
+  r.mountException(CustomErrorHandler);
+  
+  r.get('/', [AppController, 'render']);
+});
 ```
+
+## Mounting External Routers
+
+```ts
+import UserRouter from '../user/UserRoutes';
+
+export default composeRouter((r) => {
+  r.mountRouter('/users', UserRouter);
+});
+```
+
+## Service Injection
+
+You can inject services into your controllers using `r.mountService()`. These services will be passed to the controller's factory function.
+
+```ts
+import { composeRouter } from 'gaman/compose';
+import { AppService } from './services/AppService';
+import AppController from './controllers/AppController';
+
+export default composeRouter((r) => {
+  // Inject services
+  r.mountService({
+    appService: AppService(),
+  });
+
+  r.get('/', [AppController, 'render']);
+});
+```
+
+See [Controller](/docs/overview/controllers) and [Service](/docs/overview/services) for more details on the dependency injection pattern.
 
 ## Full Chaining
 

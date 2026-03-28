@@ -4,132 +4,56 @@ title: Static Serve
 
 ---
 
-`@gaman/static` is the **official middleware** for serving **static files** in the **GamanJS** framework.
+The `@gaman/static` package allows you to serve static files (images, CSS, JS, etc.) from a directory. It includes automatic MIME type detection, ETag generation, and support for Brotli/Gzip compression.
 
-With this middleware, you can serve files like **HTML, CSS, JS, images, fonts, manifest** and other assets directly from a specific folder (default: `public/`).
-
-This middleware already supports:
-
-- Automatic **MIME type** detection (with customization options).
-
-- **Brotli (.br)** and **Gzip (.gz)** compression based on `Accept-Encoding`.
-
-- **ETag** for efficient caching (supports `304 Not Modified`).
-
-- Fallback option to **`index.html`** for **SPA** applications.
-
----
-
-## Install
+## Installation
 
 import { PackageManagers } from "starlight-package-managers";
 
 <PackageManagers
-
   pkg="@gaman/static"
-
   pkgManagers={["npm", "pnpm", "yarn", "bun"]}
-
   type="install"
-
  />
 
----
+## Usage
 
-## How to Use
-
-Simplest example:
+Register the static file middleware in your bootstrap file using `app.mount()`:
 
 ```ts
+import { defineBootstrap } from 'gaman';
+import { StaticServe } from '@gaman/static';
 
-// index.ts
+defineBootstrap(async (app) => {
+  // Serve files from the 'public' folder (default)
+  app.mount(StaticServe());
 
-import { staticServe } from "@gaman/static"
+  // Or with custom configuration
+  app.mount(StaticServe({
+    publicPath: './assets',
+    rewriteRequestPath: (p) => p.replace(/^\/static/, ''),
+    fallbackToIndexHTML: true, // SPA fallback
+  }));
 
-defineBootstrap((app) => {
-
-  app.mount(staticServe())
-
-})
-
+  app.mountServer({ http: 3431 });
+});
 ```
 
-By default, the middleware will read files from the public/ folder.
+## Configuration Options
 
-## Complete Example
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `publicPath` | `string` | `"public"` | Path to the directory to serve |
+| `defaultDocument` | `string` | `"index.html"` | File to serve when a directory is requested |
+| `rewriteRequestPath` | `(path: string) => string` | — | Rewrite request paths (e.g., strip prefix) |
+| `fallbackToIndexHTML` | `boolean` | `false` | Fallback to `index.html` on 404 (SPA support) |
+| `cacheControl` | `string` | — | Customize `Cache-Control` header |
+| `mimes` | `Record<string, string>` | — | Custom MIME type mappings |
+| `onFound` | `(path, ctx) => void` | — | Callback when a file is found |
+| `onNotFound` | `(path, ctx) => void` | — | Callback when a file is not found |
 
-```ts
+## Features
 
-// index.ts
-
-import { staticServe } from "@gaman/static"
-
-defineBootstrap((app) => {
-
-  app.mount(
-
-    staticServe({
-
-      path: "assets", // asset folder
-
-      defaultDocument: "home.html", // default file if accessing folder
-
-      fallbackToIndexHTML: true, // SPA fallback
-
-      cacheControl: "public, max-age=86400", // cache 1 day
-
-      rewriteRequestPath: (p) => p.replace(/^\/static/, ""), // remove prefix
-
-      mimes: {
-
-        ".webmanifest": "application/manifest+json"
-
-      },
-
-      onFound: (filePath, ctx) => {
-
-        Log.log("Serve file:", filePath)
-
-      },
-
-      onNotFound: (filePath, ctx) => {
-
-        Log.log("File not found:", filePath)
-
-      }
-
-    })
-
-  )
-
-})
-
-```
-
-## Config
-
-| Name                  | Type                                 | Default                   | Description |
-
-|-----------------------|--------------------------------------|---------------------------|-----------|
-
-| `path`                | `string`                            | `"public"`                | Root folder for static assets. |
-
-| `mimes`               | `Record<string, string>`            | `{}`                      | Custom MIME type mapping. |
-
-| `defaultDocument`     | `string`                            | `"index.html"`            | Default file when directory is accessed. |
-
-| `rewriteRequestPath`  | `(path: string) => string`          | `undefined`               | Function to modify the request path. |
-
-| `onFound`             | `(path: string, ctx: any) => void`  | `undefined`               | Callback when file is found. |
-
-| `onNotFound`          | `(path: string, ctx: any) => void`  | `undefined`               | Callback when file is not found. |
-
-| `cacheControl`        | `string`                            | `"public, max-age=3600"`  | `Cache-Control` header. |
-
-| `fallbackToIndexHTML` | `boolean`                           | `false`                   | Fallback to `index.html` for SPA applications. |
-
-| `priority`            | `Priority` enum                     | `Priority.MONITOR`        | Execution order of middleware in the pipeline. |
-
-| `includes`            | `string[]`                          | `[]`                      | Paths that will be protected by middleware. |
-
-| `excludes`            | `string[]`                          | `[]`                      | Paths excluded from middleware. |
+- **Automatic Compression**: Serves `.br` or `.gz` files if they exist and the browser supports it.
+- **ETag & 304**: Automatic ETag generation for efficient browser caching.
+- **Performance**: Built on top of `Bun.file()` for maximum speed.

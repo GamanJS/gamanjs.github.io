@@ -3,283 +3,129 @@ title: Responses
 description: GamanJS menyediakan global Res (class Responder) untuk membuat response API yang konsisten dan standar.
 ---
 
-GamanJS menyediakan global `Res` (alias dari class `Responder`) untuk membuat response yang **konsisten dan standar**. Tujuannya agar semua API response dari aplikasi kamu memiliki format yang sama — tidak ada lagi response yang beda-beda format antar endpoint.
+Di GamanJS v2, cara utama untuk mengirim response adalah menggunakan `ctx.send()`. Method ini menyediakan interface yang lancar (fluent interface) untuk membuat dan menyesuaikan HTTP response dengan mudah.
 
-## Standar Response Format
+## Penggunaan Dasar
 
-Semua response yang dibuat via `Res.send()` / `Res.message()` / `Res.error()` menghasilkan format JSON yang konsisten:
-
-```json
-{
-  "success": true,
-  "message": "Success",
-  "data": { ... },
-  "metadata": {
-    "requestId": "abc123...",
-    "timestamp": "2026-03-23T07:00:00.000Z"
-  }
-}
-```
-
-| Field | Type | Deskripsi |
-|-------|------|-----------|
-| `success` | `boolean` | `true` jika status 2xx, `false` jika lainnya |
-| `message` | `string` | Pesan response (otomatis berdasarkan status code, atau custom) |
-| `data` | `any` | Data response (opsional) |
-| `errors` | `Record<string, string[]>` | Validation errors (opsional) |
-| `metadata` | `object` | Request ID & timestamp, plus metadata custom |
-
----
-
-## Static Factory Methods
-
-### `Res.send(data, options?)` ⭐ **Utama**
-
-Method utama untuk mengirim response dengan data. **Ini yang paling sering dipakai.**
+Method `ctx.send()` menerima satu argumen opsional: `data`. Method ini mengembalikan `GamanResponseBuilder` yang bisa kamu gunakan untuk memfinalisasi response.
 
 ```ts
-// Kirim data dengan status 200 (default)
-return Res.send({ name: 'Angga', age: 25 });
+// Kirim JSON dengan status 200 (default)
+return ctx.send({ name: 'GamanJS', version: '2.0' }).ok();
 
-// Kirim data dengan status custom
-return Res.send(users, 201);
+// Kirim dengan status yang berbeda
+return ctx.send({ error: 'Conflict' }).conflict();
 
-// Kirim data dengan opsi lengkap
-return Res.send(users, {
-  status: 200,
-  message: 'Users retrieved successfully',
-});
+// Kirim dengan status custom menggunakan .build()
+return ctx.send({ message: 'Success' }).build(200);
 ```
 
-Output:
+### Tipe Data yang Didukung
 
-```json
-{
-  "success": true,
-  "message": "Success",
-  "data": { "name": "Angga", "age": 25 },
-  "metadata": {
-    "requestId": "...",
-    "timestamp": "..."
-  }
-}
-```
+`ctx.send()` secara otomatis mendeteksi tipe konten berdasarkan data yang diberikan:
 
-### `Res.message(msg, options?)`
+- **Object/Array**: Dikirim sebagai `application/json`.
+- **String (HTML)**: Jika string dimulai dengan `<` dan diakhiri dengan `>`, dikirim sebagai `text/html`.
+- **String (Plain)**: Dikirim sebagai `text/plain`.
+- **Buffer/Blob**: Dikirim dengan tipe konten binary yang sesuai (jika terdeteksi) atau `application/octet-stream`.
 
-Kirim response hanya dengan pesan (tanpa data):
+## Response Headers
+
+> [!IMPORTANT]
+> `ctx.send()` **tidak** menerima objek konfigurasi header. Untuk mengatur response header, kamu harus menggunakan API `ctx.headers` **sebelum** memanggil `ctx.send()`.
 
 ```ts
-return Res.message('Welcome to GamanJS');
-return Res.message('User created successfully', 201);
+// Atur header
+ctx.headers.set('X-Custom-Header', 'GamanJS-v2');
+
+// Atur beberapa header
+ctx.headers.set('Content-Type', 'application/pdf');
+
+return ctx.send(pdfBuffer).ok();
 ```
 
-Output:
+## Method GamanResponseBuilder
 
-```json
-{
-  "success": true,
-  "message": "Welcome to GamanJS",
-  "metadata": { ... }
-}
-```
+`GamanResponseBuilder` menyediakan beberapa method semantik untuk HTTP status code yang umum:
 
-### `Res.error(errors, options?)`
+### Response Sukses (2xx)
 
-Kirim response error dengan detail validation errors:
+| Method | Status Code | Deskripsi |
+|--------|-------------|-----------|
+| `.ok()` | `200` | Response sukses standar. |
+| `.created()` | `201` | Resource berhasil dibuat. |
+| `.accepted()` | `202` | Request diterima tapi masih diproses. |
+| `.noContent()` | `204` | Sukses tanpa body response. |
 
-```ts
-return Res.error({
-  email: ['Email wajib diisi', 'Format email tidak valid'],
-  password: ['Password minimal 8 karakter'],
-}, 422);
-```
+### Response Error Client (4xx)
 
-Output:
+> [!NOTE]
+> Beberapa method error seperti `.unauthorized()`, `.forbidden()`, dan `.notFound()` akan mengganti body response dengan object error standar `\{ message: "..." \}`, mengabaikan data yang dikirim via `ctx.send()`.
 
-```json
-{
-  "success": false,
-  "message": "Unprocessable Entity",
-  "errors": {
-    "email": ["Email wajib diisi", "Format email tidak valid"],
-    "password": ["Password minimal 8 karakter"]
-  },
-  "metadata": { ... }
-}
-```
+| Method | Status Code | Deskripsi |
+|--------|-------------|-----------|
+| `.badRequest(msg?)` | `400` | Client side error. Jika `msg` ada, mengembalikan `\{ message, data \}`. |
+| `.unauthorized(msg?)` | `401` | Mengembalikan `\{ message: msg || 'Unauthorized' \}`. |
+| `.forbidden(msg?)` | `403` | Mengembalikan `\{ message: msg || 'Forbidden' \}`. |
+| `.notFound(msg?)` | `404` | Mengembalikan `\{ message: msg || 'Not Found' \}`. |
+| `.conflict(msg?)` | `409` | Resource conflict. Jika `msg` ada, mengembalikan `\{ message, data \}`. |
+| `.unprocessable(errs?, msg?)` | `422` | Mengembalikan `\{ message, errors: errs || data \}`. |
+| `.tooManyRequests(msg?)` | `429` | Mengembalikan `\{ message: msg || 'Too Many Requests' \}`. |
 
-### `Res.ok(data)`
+### Response Error Server (5xx)
 
-Shortcut untuk `Res.send(data)` dengan status `200`:
+| Method | Status Code | Deskripsi |
+|--------|-------------|-----------|
+| `.error(msg?)` | `500` | Mengembalikan `\{ message: msg || 'Internal Server Error' \}`. |
 
-```ts
-return Res.ok(users);
-```
+### Redirection & Lainnya (3xx)
 
-### `Res.notFound(data?)`
+| Method | Status Code | Deskripsi |
+|--------|-------------|-----------|
+| `.notModified()` | `304` | Resource tidak berubah (caching). |
 
-Shortcut untuk response `404`:
-
-```ts
-return Res.notFound();
-```
-
----
-
-## Raw Response Methods
-
-Method untuk mengirim response **tanpa** standar format (raw body):
-
-### `Res.json(data, options?)`
-
-Kirim raw JSON (tanpa wrapper `success`, `message`, dll):
-
-```ts
-return Res.json({ custom: 'format' });
-```
-
-### `Res.text(message, options?)`
-
-Kirim plain text:
-
-```ts
-return Res.text('Hello World');
-```
-
-### `Res.html(body, options?)`
-
-Kirim HTML:
-
-```ts
-return Res.html('<h1>Hello World</h1>');
-```
-
-### `Res.stream(readableStream, options?)`
-
-Kirim stream response:
-
-```ts
-const file = Bun.file('./large-video.mp4');
-return Res.stream(file.stream());
-```
-
-### `Res.render(viewName, viewData?, options?)`
-
-Kirim response HTML dari view template:
-
-```ts
-return Res.render('home', { title: 'Welcome' });
-```
-
-### `Res.redirect(location, status?)`
-
-Redirect response:
-
-```ts
-return Res.redirect('/dashboard');      // 302
-return Res.redirect('/new-url', 301);   // 301
-```
-
----
-
-## Fluent API (Method Chaining)
-
-Semua instance `Responder` mendukung chaining:
-
-```ts
-return Res.send(data)
-  .status(201)
-  .message('User created')
-  .meta({ page: 1, total: 100 })
-  .header('X-Custom', 'value');
-```
-
-### Chaining Methods
+### Status Custom
 
 | Method | Deskripsi |
-|--------|-----------|
-| `.message(msg)` | Set pesan custom |
-| `.status(code)` | Set HTTP status code |
-| `.statusText(text)` | Set status text |
-| `.meta(data)` | Tambah metadata custom |
-| `.header(key, value)` | Tambah response header |
-| `.error(errors, msg?)` | Set validation errors |
+|--------|-------------|
+| `.build(status)` | Finalisasi response dengan HTTP status code tertentu. |
 
----
+## Contoh
 
-## Status Shortcuts
-
-Method shortcut untuk set status code:
+### Response JSON dengan Pesan Custom
 
 ```ts
-return Res.send(data).ok();                 // 200
-return Res.send(data).created();            // 201
-return Res.send(data).accepted();           // 202
-return Res.send(data).noContent();          // 204
-return Res.send(data).badRequest();         // 400
-return Res.send(data).unauthorized();       // 401
-return Res.send(data).forbidden();          // 403
-return Res.send(data).notFound();           // 404
-return Res.send(data).methodNotAllowed();   // 405
-return Res.send(data).tooManyRequests();    // 429
-return Res.send(data).internalServerError();// 500
+export default (ctx) => {
+  return ctx.send({ 
+    success: true, 
+    message: 'User berhasil diperbarui' 
+  }).ok();
+}
 ```
 
-### Redirect Shortcuts
+### Menangani Kesalahan Validasi
 
 ```ts
-return Res.send(null).movedPermanently('/new-url');  // 301
-return Res.send(null).movedTemporarily('/temp-url');  // 302
+export default async (ctx) => {
+  const body = await ctx.json();
+  
+  if (!body.username) {
+    return ctx.send({
+      username: ['Username wajib diisi']
+    }).unprocessable(null, 'Validasi Gagal');
+  }
+
+  // ... logika
+}
 ```
 
----
+### Mengatur Cookie
 
-## Contoh Lengkap
+Cookie juga dikelola melalui context:
 
 ```ts
-import { composeController } from 'gaman/compose';
-import UserService from '../services/UserService';
-import type { RT } from 'gaman/types';
-
-export default composeController(
-  (userService: RT<typeof UserService> = UserService()) => ({
-    // GET /users
-    GetAll(ctx) {
-      const users = userService.findAll();
-      return Res.send(users).meta({ total: users.length });
-    },
-
-    // GET /users/:id
-    GetById(ctx) {
-      const user = userService.findById(ctx.param('id'));
-      if (!user) return Res.message('User not found').notFound();
-      return Res.send(user);
-    },
-
-    // POST /users
-    async Create(ctx) {
-      const body = await ctx.json();
-
-      if (!body.email) {
-        return Res.error({ email: ['Email wajib diisi'] }, 422);
-      }
-
-      const user = userService.create(body);
-      return Res.send(user, { status: 201, message: 'User created' });
-    },
-
-    // DELETE /users/:id
-    Delete(ctx) {
-      userService.delete(ctx.param('id'));
-      return Res.send(null).noContent(); // 204 No Content
-    },
-  }),
-);
+export default (ctx) => {
+  ctx.cookies.set('session', 'abc-123', { httpOnly: true });
+  return ctx.send({ message: 'Cookie berhasil diatur' }).ok();
+}
 ```
-
-## Kenapa Pakai `Res.send()`?
-
-> **Masalah:** Kebanyakan developer membuat API response dengan format yang beda-beda antar endpoint. Ada yang `{ data: ... }`, `{ result: ... }`, `{ status: 'ok' }`, dll.
->
-> **Solusi:** GamanJS memaksa format response yang konsisten lewat `Res`. Semua response otomatis punya `success`, `message`, `data`, `errors`, dan `metadata`.

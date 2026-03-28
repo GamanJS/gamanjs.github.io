@@ -2,7 +2,7 @@
 title: Introduction
 ---
 
-> _A Lean Framework for Heavy-Duty Enterprise Performance._
+> _A Lean Framework for Enterprise Scalability._
 
 GamanJS adalah framework HTTP ringan dan cepat yang dibangun di atas [Bun](https://bun.sh) runtime. Dirancang untuk membangun REST API yang terstruktur dengan arsitektur **Controller-Service-Middleware** yang bersih dan mudah di-maintain.
 
@@ -10,9 +10,9 @@ GamanJS adalah framework HTTP ringan dan cepat yang dibangun di atas [Bun](https
 
 - ⚡ **Blazing Fast** — Dibangun di atas Bun `Bun.serve()` untuk performa maksimal
 - 🏗️ **Arsitektur Terstruktur** — Pola Controller / Service / Middleware bawaan
-- 📦 **Standar Response** — Format response API yang konsisten via `Res` global
+- 📦 **API Response Fluent** — Penanganan response yang bersih dan konsisten via `ctx.send()`
 - 🔀 **Router Deklaratif** — Definisi route yang bersih dengan `composeRouter`
-- 🧩 **Dependency Injection Sederhana** — DI via parameter default di controller
+- 🧩 **Type-Safe DI** — Dependency injection sederhana via destrukturisasi dan TypeScript
 - 🛡️ **Exception Handling** — Global & per-route exception handler
 - 🎯 **Middleware Priority** — Kontrol urutan middleware eksekusi
 
@@ -26,7 +26,7 @@ GamanJS adalah framework HTTP ringan dan cepat yang dibangun di atas [Bun](https
 | [Controller](/id/docs/overview/controllers) | Membuat controller dengan `composeController` |
 | [Service](/id/docs/overview/services) | Business logic dengan `composeService` |
 | [Middleware](/id/docs/overview/middlewares) | Middleware & priority system |
-| [Response](/id/docs/overview/responses) | Standar response API dengan `Res` |
+| [Response](/id/docs/overview/responses) | Penanganan response fluent dengan `ctx.send` |
 | [Context](/id/docs/technical/context) | Request context (`ctx`) secara detail |
 | [Exception Handler](/id/docs/overview/exceptions) | Error handling global & per-route |
 
@@ -36,97 +36,120 @@ GamanJS adalah framework HTTP ringan dan cepat yang dibangun di atas [Bun](https
 bun create gaman@latest
 ```
 
+### Struktur Project Default
+
+GamanJS mengadopsi filosofi **Feature-Based Modularity**. Untuk skalabilitas yang lebih baik, kami merekomendasikan penempatan route, controller, dan service di dalam modul fitur:
+
 ```
 src/
-├── index.ts              # Bootstrap aplikasi
-├── router.ts             # Definisi semua route
-└── module/
-    ├── controllers/
-    │   └── AppController.ts
-    ├── services/
-    │   └── AppService.ts
-    └── middlewares/
-        └── AppMiddleware.ts
+├── index.ts                 # The Orchestrator (Entry Point)
+└── modules/
+    └── app/                 # Modul Utama Aplikasi
+        ├── controllers/
+        │   └── AppController.ts
+        ├── services/
+        │   └── AppService.ts
+        ├── middlewares/
+        │   └── AppMiddleware.ts
+        └── AppRoutes.ts     # Route untuk modul ini
+```
+
+### Enterprise Project Architecture
+
+Untuk aplikasi skala produksi yang besar, kamu bisa menambahkan lebih banyak modul fitur:
+
+```
+src/
+├── index.ts                 # The Orchestrator (Entry Point)
+├── database/                # Konfigurasi Database
+└── modules/                 # Pusat Logika Aplikasi
+    ├── app/                 # Modul Infrastruktur (Global/Shared)
+    │   ├── controllers/     # Handler untuk Request Global (Health, Index)
+    │   │   └── AppController.ts
+    │   ├── services/        # Utility Shared & System Services
+    │   │   └── AppService.ts
+    │   └── AppRoutes.ts     # Middleware Global & Base Routing
+    │
+    └── user/                # Modul Fitur (Contoh: User Management)
+        ├── controllers/     # Request Handlers (Login, Register, Profile)
+        │   └── UserController.ts
+        ├── services/        # Business Logic (Auth Logic, User CRUD)
+        │   └── UserService.ts
+        ├── models/          # Data Access Layer (Didukung @gaman/orm)
+        │   └── UserModel.ts
+        └── UserRoutes.ts    # Scoped Routes & Feature Middleware
 ```
 
 ### `src/index.ts`
 
 ```ts
 import { defineBootstrap } from 'gaman';
-import router from './router';
+import AppRoutes from './modules/app/AppRoutes';
 
 defineBootstrap(async (app) => {
-  app.mount(router);
+  app.mount(AppRoutes);
   app.mountServer({ http: 3431 });
 });
 ```
 
-### `src/router.ts`
+### `src/modules/app/AppRoutes.ts`
 
 ```ts
 import { composeRouter } from 'gaman/compose';
-import AppController from './module/controllers/AppController';
+import { AppService } from './services/AppService';
+import AppController from './controllers/AppController';
 
 export default composeRouter((r) => {
+  // Inject service
+  r.mountService({
+    appService: AppService(),
+  });
+
   r.get('/', [AppController, 'HelloWorld']);
 });
 ```
 
-### `src/module/controllers/AppController.ts`
+### `src/modules/app/controllers/AppController.ts`
 
 ```ts
 import { composeController } from 'gaman/compose';
-import AppService from '../services/AppService';
-import type { RT } from 'gaman/types';
+import { AppService } from '../services/AppService';
 
-export default composeController(
-  (appService: RT<typeof AppService> = AppService()) => ({
-    HelloWorld(ctx) {
-      return Res.message(appService.WelcomeMessage());
-    },
-  }),
-);
-```
+export type Deps = {
+  appService: AppService;
+};
 
-### `src/module/services/AppService.ts`
-
-```ts
-import { composeService } from 'gaman/compose';
-
-export default composeService(() => ({
-  WelcomeMessage() {
-    return '❤️ Welcome to GamanJS';
+export default composeController(({ appService }: Deps) => ({
+  HelloWorld(ctx) {
+    return ctx.send(appService.WelcomeMessage()).ok();
   },
 }));
 ```
 
-### `src/module/middlewares/AppMiddleware.ts`
+### `src/modules/app/services/AppService.ts`
+
+```ts
+import { composeService } from 'gaman/compose';
+import type { RT } from 'gaman/types';
+
+export const AppService = composeService(() => ({
+  WelcomeMessage() {
+    return '❤️ Welcome to GamanJS';
+  },
+}));
+
+export type AppService = RT<typeof AppService>;
+```
+
+### `src/modules/app/middlewares/AppMiddleware.ts`
 
 ```ts
 import { composeMiddleware } from 'gaman/compose';
 
 export default composeMiddleware(async (ctx, next) => {
+  console.log(`[${ctx.request.method}] ${ctx.path}`);
   return next();
 });
-```
-
-Jalankan:
-
-```bash
-bun run dev
-```
-
-Server akan berjalan di `http://localhost:3431`. Akses endpoint `/` dan kamu akan mendapat response standar:
-
-```json
-{
-  "success": true,
-  "message": "❤️ Welcome to GamanJS",
-  "metadata": {
-    "requestId": "abc123...",
-    "timestamp": "2026-03-23T07:00:00.000Z"
-  }
-}
 ```
 
 ## 📄 Lisensi

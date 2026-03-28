@@ -8,7 +8,7 @@ Middleware in GamanJS runs **before** the route handler and can perform checks, 
 ## Creating Middleware
 
 ```ts
-// src/module/middlewares/AppMiddleware.ts
+// src/modules/app/middlewares/AppMiddleware.ts
 import { composeMiddleware } from 'gaman/compose';
 
 export default composeMiddleware(async (ctx, next) => {
@@ -24,7 +24,7 @@ export default composeMiddleware(async (ctx, next) => {
 
 ### Stopping a Request
 
-If middleware needs to stop the request (e.g., auth failure), **don't call `next()`**, return `Res` directly:
+If middleware needs to stop the request (e.g., auth failure), **don't call `next()`**, return a response using `ctx.send()`:
 
 ```ts
 import { composeMiddleware } from 'gaman/compose';
@@ -33,7 +33,7 @@ export default composeMiddleware(async (ctx, next) => {
   const token = ctx.header('Authorization');
 
   if (!token) {
-    return Res.message('Unauthorized').unauthorized();
+    return ctx.send({ message: 'Unauthorized' }).unauthorized();
   }
 
   // Token valid, continue
@@ -48,7 +48,7 @@ Register in `defineBootstrap` via `app.mount()`:
 ```ts
 import { defineBootstrap } from 'gaman';
 import router from './router';
-import LogMiddleware from './module/middlewares/LogMiddleware';
+import LogMiddleware from './modules/app/middlewares/LogMiddleware';
 
 defineBootstrap(async (app) => {
   // Global middleware — runs on ALL routes
@@ -65,8 +65,8 @@ Register directly on route definitions:
 
 ```ts
 import { composeRouter } from 'gaman/compose';
-import AuthMiddleware from './module/middlewares/AuthMiddleware';
-import UserController from './module/controllers/UserController';
+import AuthMiddleware from './modules/app/middlewares/AuthMiddleware';
+import UserController from './modules/app/controllers/UserController';
 
 export default composeRouter((r) => {
   r.get('/profile', [UserController, 'Profile'])

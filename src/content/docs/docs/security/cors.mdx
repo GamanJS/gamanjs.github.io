@@ -34,11 +34,11 @@ here is how to implement `@gaman/cors`
 
  ```ts
  // index.ts
- import { cors } from "@gaman/cors"
+ import { Cors } from "@gaman/cors"
 
  defineBootstrap((app) => {
    app.mount(
-     cors({ origin: '*' })
+     Cors({ origin: '*' })
    )
    ...
  })
@@ -48,9 +48,9 @@ if you want specific to a certain route just implement like this
 
  ```ts
  // AppRoutes.ts
- import { cors } from "@gaman/cors"
+ import { Cors } from "@gaman/cors"
 
- route.get('/user').middleware(cors())
+ route.get('/user').middleware(Cors())
  ```
 
 ## Config

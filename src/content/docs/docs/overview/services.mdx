@@ -7,24 +7,35 @@ Services in GamanJS hold your **business logic**. Created with `composeService`,
 
 ## Creating a Service
 
+The recommended pattern is to export the service instance as a constant and export its return type for easier dependency injection in controllers.
+
 ```ts
-// src/module/services/AppService.ts
+// src/modules/app/services/AppService.ts
 import { composeService } from 'gaman/compose';
+import type { RT } from 'gaman/types';
 
-export default composeService(() => ({
-  WelcomeMessage() {
-    return '❤️ Welcome to GamanJS';
-  },
-}));
+export const AppService = composeService(() => {
+  /**
+   * You can put your private logic, state, or database connections here
+   */
+  
+  return {
+    WelcomeMessage() {
+      return '❤️ Welcome to GamanJS';
+    },
+  };
+});
+
+// Export the return type of the service
+export type AppService = RT<typeof AppService>;
 ```
-
-`composeService` takes a factory function that returns an object containing logic methods.
 
 ## Example: User Service
 
 ```ts
-// src/module/services/UserService.ts
+// src/modules/app/services/UserService.ts
 import { composeService } from 'gaman/compose';
+import type { RT } from 'gaman/types';
 
 interface User {
   id: number;
@@ -34,31 +45,27 @@ interface User {
 
 const users: User[] = [
   { id: 1, name: 'Angga', email: 'angga@example.com' },
-  { id: 2, name: 'Budi', email: 'budi@example.com' },
 ];
 
-export default composeService(() => ({
-  findAll(): User[] {
-    return users;
-  },
+export const UserService = composeService(() => {
+  return {
+    findAll(): User[] {
+      return users;
+    },
 
-  findById(id: number): User | undefined {
-    return users.find((u) => u.id === id);
-  },
+    findById(id: number): User | undefined {
+      return users.find((u) => u.id === id);
+    },
 
-  create(data: Omit<User, 'id'>): User {
-    const newUser = { ...data, id: users.length + 1 };
-    users.push(newUser);
-    return newUser;
-  },
+    create(data: Omit<User, 'id'>): User {
+      const newUser = { ...data, id: users.length + 1 };
+      users.push(newUser);
+      return newUser;
+    },
+  };
+});
 
-  delete(id: number): boolean {
-    const idx = users.findIndex((u) => u.id === id);
-    if (idx === -1) return false;
-    users.splice(idx, 1);
-    return true;
-  },
-}));
+export type UserService = RT<typeof UserService>;
 ```
 
 ## Service with Dependencies
@@ -66,61 +73,50 @@ export default composeService(() => ({
 Services can also receive dependencies from other services:
 
 ```ts
-// src/module/services/EmailService.ts
-import { composeService } from 'gaman/compose';
-
-export default composeService(() => ({
-  sendWelcome(email: string) {
-    console.log(`Sending welcome email to ${email}`);
-  },
-
-  sendResetPassword(email: string, token: string) {
-    console.log(`Sending reset password email to ${email}`);
-  },
-}));
-```
-
-```ts
-// src/module/services/AuthService.ts
+// src/modules/app/services/AuthService.ts
 import { composeService } from 'gaman/compose';
 import type { RT } from 'gaman/types';
-import EmailService from './EmailService';
+import { EmailService } from './EmailService';
 
-export default composeService(
-  (emailService: RT<typeof EmailService> = EmailService()) => ({
-    register(name: string, email: string) {
-      // ... register logic
-      emailService.sendWelcome(email);
-      return { name, email };
-    },
-
-    resetPassword(email: string) {
-      const token = crypto.randomUUID();
-      emailService.sendResetPassword(email, token);
-    },
-  }),
+export const AuthService = composeService(
+  (emailService: RT<typeof EmailService> = EmailService()) => {
+    return {
+      register(name: string, email: string) {
+        // ... register logic
+        emailService.sendWelcome(email);
+        return { name, email };
+      },
+    };
+  }
 );
+
+export type AuthService = RT<typeof AuthService>;
 ```
 
 ## Using in a Controller
 
+When using a service in a controller, use the recommended destructuring pattern with a `Deps` type.
+
 ```ts
 import { composeController } from 'gaman/compose';
-import UserService from '../services/UserService';
-import type { RT } from 'gaman/types';
+import { UserService } from '../services/UserService';
 
-export default composeController(
-  (userService: RT<typeof UserService> = UserService()) => ({
-    GetAll(ctx) {
-      return Res.send(userService.findAll());
-    },
-  }),
-);
+export type Deps = {
+  userService: UserService;
+};
+
+export default composeController(({ userService }: Deps) => ({
+  GetAll(ctx) {
+    const users = userService.findAll();
+    return ctx.send(users).ok();
+  },
+}));
 ```
 
 ## Tips
 
-- Services do **not** have access to `ctx` — this is intentional so logic stays independent from HTTP
-- One service can be used by multiple controllers
-- Services can depend on each other
-- Separation of concerns: Service = business logic, Controller = HTTP handling
+- Services do **not** have access to `ctx` — this is intentional so logic stays independent from HTTP.
+- One service can be used by multiple controllers.
+- Services can depend on each other.
+- Use `export type Name = RT<typeof Name>` to make DI clean and type-safe.
+- Separation of concerns: Service = business logic, Controller = HTTP handling.

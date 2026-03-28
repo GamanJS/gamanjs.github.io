@@ -1,19 +1,11 @@
 ---
 title: Static Serve
+description: "Package @gaman/static memungkinkan kamu melayani file statis (gambar, CSS, JS, dll) dari direktori tertentu."
 ---
 
-`@gaman/static` adalah **middleware resmi** untuk melayani **static files** pada framework **GamanJS**.  
-Dengan middleware ini Anda bisa menyajikan file seperti **HTML, CSS, JS, gambar, font, manifest** dan asset lainnya langsung dari folder tertentu (default: `public/`).
+Package `@gaman/static` memungkinkan kamu melayani file statis (gambar, CSS, JS, dll) dari sebuah direktori. Package ini mendukung deteksi MIME type otomatis, pembuatan ETag, dan dukungan kompresi Brotli/Gzip.
 
-Middleware ini sudah mendukung:
-- Deteksi otomatis **MIME type** (dengan opsi kustomisasi).
-- **Brotli (.br)** dan **Gzip (.gz)** compression berdasarkan `Accept-Encoding`.
-- **ETag** untuk caching efisien (mendukung `304 Not Modified`).
-- Opsi fallback ke **`index.html`** untuk aplikasi **SPA**.
-
----
-
-## Install
+## Instalasi
 
 import { PackageManagers } from "starlight-package-managers";
 
@@ -21,63 +13,46 @@ import { PackageManagers } from "starlight-package-managers";
   pkg="@gaman/static"
   pkgManagers={["npm", "pnpm", "yarn", "bun"]}
   type="install"
-/>
+ />
 
----
+## Penggunaan
 
-## Cara Pakai
-
-Contoh paling sederhana:
+Daftarkan middleware file statis di file bootstrap kamu menggunakan `app.mount()`:
 
 ```ts
-// index.ts
-import { staticServe } from "@gaman/static"
+import { defineBootstrap } from 'gaman';
+import { StaticServe } from '@gaman/static';
 
-defineBootstrap((app) => {
-  app.mount(staticServe())
-})
-```
-Secara default, middleware akan membaca file dari folder public/.
+defineBootstrap(async (app) => {
+  // Melayani file dari folder 'public' (default)
+  app.mount(StaticServe());
 
-## Contoh Lengkap
+  // Atau dengan konfigurasi kustom
+  app.mount(StaticServe({
+    publicPath: './assets',
+    rewriteRequestPath: (p) => p.replace(/^\/static/, ''),
+    fallbackToIndexHTML: true, // SPA fallback
+  }));
 
-```ts
-// index.ts
-import { staticServe } from "@gaman/static"
-
-defineBootstrap((app) => {
-  app.mount(
-    staticServe({
-      path: "assets", // folder asset
-      defaultDocument: "home.html", // file default jika akses ke folder
-      fallbackToIndexHTML: true, // fallback SPA
-      cacheControl: "public, max-age=86400", // cache 1 hari
-      rewriteRequestPath: (p) => p.replace(/^\/static/, ""), // hapus prefix
-      mimes: {
-        ".webmanifest": "application/manifest+json"
-      },
-      onFound: (filePath, ctx) => {
-        Log.log("Serve file:", filePath)
-      },
-      onNotFound: (filePath, ctx) => {
-        Log.log("File tidak ditemukan:", filePath)
-      }
-    })
-  )
-})
+  app.mountServer({ http: 3431 });
+});
 ```
 
-## Config
-| Nama                  | Tipe                                 | Default                   | Deskripsi |
-|-----------------------|--------------------------------------|---------------------------|-----------|
-| `path`                | `string`                            | `"public"`                | Root folder untuk asset static. |
-| `mimes`               | `Record<string, string>`            | `{}`                      | Mapping kustom MIME type. |
-| `defaultDocument`     | `string`                            | `"index.html"`            | File default ketika direktori diakses. |
-| `rewriteRequestPath`  | `(path: string) => string`          | `undefined`               | Fungsi untuk memodifikasi request path. |
-| `onFound`             | `(path: string, ctx: any) => void`  | `undefined`               | Callback ketika file ditemukan. |
-| `onNotFound`          | `(path: string, ctx: any) => void`  | `undefined`               | Callback ketika file tidak ditemukan. |
-| `cacheControl`        | `string`                            | `"public, max-age=3600"`  | Header `Cache-Control`. |
-| `fallbackToIndexHTML` | `boolean`                           | `false`                   | Fallback ke `index.html` untuk aplikasi SPA. |
-| `priority`            | `Priority` enum                     | `Priority.MONITOR`        | Urutan eksekusi middleware di pipeline. |
-| `includes`            | `string[]`                          | `[]`                      | Path yang akan diproteksi middleware. |
-| `excludes`            | `string[]`                          | `[]`                      | Path yang dikecualikan dari middleware. |
+## Opsi Konfigurasi
+
+| Opsi | Tipe | Default | Deskripsi |
+|--------|------|---------|-------------|
+| `publicPath` | `string` | `"public"` | Path ke direktori yang akan dilayani |
+| `defaultDocument` | `string` | `"index.html"` | File yang akan dikembalikan jika direktori di-request |
+| `rewriteRequestPath` | `(path: string) => string` | — | Rewrite request path (misal: hapus prefix) |
+| `fallbackToIndexHTML` | `boolean` | `false` | Fallback ke `index.html` jika 404 (dukungan SPA) |
+| `cacheControl` | `string` | — | Kustomisasi header `Cache-Control` |
+| `mimes` | `Record<string, string>` | — | Mapping MIME type kustom |
+| `onFound` | `(path, ctx) => void` | — | Callback saat file ditemukan |
+| `onNotFound` | `(path, ctx) => void` | — | Callback saat file tidak ditemukan |
+
+## Fitur
+
+- **Kompresi Otomatis**: Melayani file `.br` atau `.gz` jika ada dan browser mendukungnya.
+- **ETag & 304**: Pembuatan ETag otomatis untuk caching browser yang efisien.
+- **Performa**: Dibangun di atas `Bun.file()` untuk kecepatan maksimal.

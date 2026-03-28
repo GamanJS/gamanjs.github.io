@@ -3,283 +3,144 @@ title: Responses
 description: GamanJS provides a global Res (Responder class) to create consistent and standardized API responses.
 ---
 
-GamanJS provides a global `Res` (alias for the `Responder` class) to create **consistent and standardized** responses. The goal is for all API responses from your application to have the same format — no more inconsistent response formats across endpoints.
+In GamanJS v2, the primary way to send a response is using `ctx.send()`. This method provides a fluent interface to create and customize HTTP responses easily.
 
-## Standard Response Format
+## Basic Usage
 
-All responses created via `Res.send()` / `Res.message()` / `Res.error()` produce a consistent JSON format:
+The `ctx.send()` method takes two optional arguments: `data` and `status`. It returns a `GamanResponseBuilder` which you can use to finalize the response.
 
-```json
-{
-  "success": true,
-  "message": "Success",
-  "data": { ... },
-  "metadata": {
-    "requestId": "abc123...",
-    "timestamp": "2026-03-23T07:00:00.000Z"
-  }
-}
+```ts
+// Send JSON with status 200 (default)
+return ctx.send({ name: 'GamanJS', version: '2.0' }).ok();
+
+// Send with a different status
+return ctx.send({ error: 'Conflict' }).conflict();
+
+// Send with a custom status using .build()
+return ctx.send({ message: 'Success' }).build(200);
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `success` | `boolean` | `true` if status 2xx, `false` otherwise |
-| `message` | `string` | Response message (auto-set based on status code, or custom) |
-| `data` | `any` | Response data (optional) |
-| `errors` | `Record<string, string[]>` | Validation errors (optional) |
-| `metadata` | `object` | Request ID & timestamp, plus custom metadata |
+### Supported Data Types
+
+`ctx.send()` automatically detects the content type based on the data provided:
+
+- **Object/Array**: Sent as `application/json`.
+- **String (HTML)**: If the string starts with `<` and ends with `>`, it's sent as `text/html`.
+- **String (Plain)**: Sent as `text/plain`.
+- **Buffer/Blob**: Sent with the appropriate binary content type (if detectable) or `application/octet-stream`.
 
 ---
 
-## Static Factory Methods
+## Response Headers
 
-### `Res.send(data, options?)` ⭐ **Primary**
-
-The primary method for sending responses with data. **This is the most commonly used.**
-
-```ts
-// Send data with status 200 (default)
-return Res.send({ name: 'Angga', age: 25 });
-
-// Send data with custom status
-return Res.send(users, 201);
-
-// Send data with full options
-return Res.send(users, {
-  status: 200,
-  message: 'Users retrieved successfully',
-});
-```
-
-Output:
-
-```json
-{
-  "success": true,
-  "message": "Success",
-  "data": { "name": "Angga", "age": 25 },
-  "metadata": {
-    "requestId": "...",
-    "timestamp": "..."
-  }
-}
-```
-
-### `Res.message(msg, options?)`
-
-Send a response with only a message (no data):
+> [!IMPORTANT]
+> `ctx.send()` **does not** accept a header configuration object. To set response headers, you must use the `ctx.headers` API **before** calling `ctx.send()`.
 
 ```ts
-return Res.message('Welcome to GamanJS');
-return Res.message('User created successfully', 201);
-```
+// Set a header
+ctx.headers.set('X-Custom-Header', 'GamanJS-v2');
 
-Output:
+// Set multiple headers
+ctx.headers.set('Content-Type', 'application/pdf');
 
-```json
-{
-  "success": true,
-  "message": "Welcome to GamanJS",
-  "metadata": { ... }
-}
-```
-
-### `Res.error(errors, options?)`
-
-Send an error response with validation error details:
-
-```ts
-return Res.error({
-  email: ['Email is required', 'Invalid email format'],
-  password: ['Password must be at least 8 characters'],
-}, 422);
-```
-
-Output:
-
-```json
-{
-  "success": false,
-  "message": "Unprocessable Entity",
-  "errors": {
-    "email": ["Email is required", "Invalid email format"],
-    "password": ["Password must be at least 8 characters"]
-  },
-  "metadata": { ... }
-}
-```
-
-### `Res.ok(data)`
-
-Shortcut for `Res.send(data)` with status `200`:
-
-```ts
-return Res.ok(users);
-```
-
-### `Res.notFound(data?)`
-
-Shortcut for `404` response:
-
-```ts
-return Res.notFound();
+return ctx.send(pdfBuffer).ok();
 ```
 
 ---
 
-## Raw Response Methods
+## GamanResponseBuilder Methods
 
-Methods for sending responses **without** the standard format (raw body):
+The `GamanResponseBuilder` provides several semantic methods for common HTTP status codes:
 
-### `Res.json(data, options?)`
+### Success Responses (2xx)
 
-Send raw JSON (without `success`, `message` wrapper, etc):
+| Method | Status Code | Description |
+|--------|-------------|-------------|
+| `.ok()` | `200` | Standard success response. |
+| `.created()` | `201` | Resource successfully created. |
+| `.accepted()` | `202` | Request received but still processing. |
+| `.noContent()` | `204` | Success with no response body. |
 
-```ts
-return Res.json({ custom: 'format' });
-```
+### Client Error Responses (4xx)
 
-### `Res.text(message, options?)`
+> [!NOTE]
+> Some error methods like `.unauthorized()`, `.forbidden()`, and `.notFound()` will replace the response body with a standard error object `\{ message: "..." \}`, ignoring any data passed to `ctx.send()`.
 
-Send plain text:
+| Method | Status Code | Description |
+|--------|-------------|-------------|
+| `.badRequest(msg?)` | `400` | Client side error. If `msg` is provided, returns `\{ message, data \}`. |
+| `.unauthorized(msg?)` | `401` | Returns `\{ message: msg || 'Unauthorized' \}`. |
+| `.forbidden(msg?)` | `403` | Returns `\{ message: msg || 'Forbidden' \}`. |
+| `.notFound(msg?)` | `404` | Returns `\{ message: msg || 'Not Found' \}`. |
+| `.conflict(msg?)` | `409` | Resource conflict. If `msg` is provided, returns `\{ message, data \}`. |
+| `.unprocessable(errs?, msg?)` | `422` | Returns `\{ message, errors: errs || data \}`. |
+| `.tooManyRequests(msg?)` | `429` | Returns `\{ message: msg || 'Too Many Requests' \}`. |
 
-```ts
-return Res.text('Hello World');
-```
+### Server Error Responses (5xx)
 
-### `Res.html(body, options?)`
+| Method | Status Code | Description |
+|--------|-------------|-------------|
+| `.error(msg?)` | `500` | Returns `\{ message: msg \|\| 'Internal Server Error' \}`. |
 
-Send HTML:
+### Redirection & Others (3xx)
 
-```ts
-return Res.html('<h1>Hello World</h1>');
-```
+| Method | Status Code | Description |
+|--------|-------------|-------------|
+| `.notModified()` | `304` | Resource not modified (caching). |
 
-### `Res.stream(readableStream, options?)`
-
-Send stream response:
-
-```ts
-const file = Bun.file('./large-video.mp4');
-return Res.stream(file.stream());
-```
-
-### `Res.render(viewName, viewData?, options?)`
-
-Send HTML response from a view template:
-
-```ts
-return Res.render('home', { title: 'Welcome' });
-```
-
-### `Res.redirect(location, status?)`
-
-Redirect response:
-
-```ts
-return Res.redirect('/dashboard');      // 302
-return Res.redirect('/new-url', 301);   // 301
-```
-
----
-
-## Fluent API (Method Chaining)
-
-All `Responder` instances support chaining:
-
-```ts
-return Res.send(data)
-  .status(201)
-  .message('User created')
-  .meta({ page: 1, total: 100 })
-  .header('X-Custom', 'value');
-```
-
-### Chaining Methods
+### Custom Status
 
 | Method | Description |
 |--------|-------------|
-| `.message(msg)` | Set custom message |
-| `.status(code)` | Set HTTP status code |
-| `.statusText(text)` | Set status text |
-| `.meta(data)` | Add custom metadata |
-| `.header(key, value)` | Add response header |
-| `.error(errors, msg?)` | Set validation errors |
+| `.build(status)` | Finalize the response with any specific HTTP status code. |
 
 ---
 
-## Status Shortcuts
+## Examples
 
-Shortcut methods for setting status codes:
-
-```ts
-return Res.send(data).ok();                 // 200
-return Res.send(data).created();            // 201
-return Res.send(data).accepted();           // 202
-return Res.send(data).noContent();          // 204
-return Res.send(data).badRequest();         // 400
-return Res.send(data).unauthorized();       // 401
-return Res.send(data).forbidden();          // 403
-return Res.send(data).notFound();           // 404
-return Res.send(data).methodNotAllowed();   // 405
-return Res.send(data).tooManyRequests();    // 429
-return Res.send(data).internalServerError();// 500
-```
-
-### Redirect Shortcuts
+### JSON Response with Custom Message
 
 ```ts
-return Res.send(null).movedPermanently('/new-url');  // 301
-return Res.send(null).movedTemporarily('/temp-url');  // 302
+export default (ctx) => {
+  return ctx.send({ 
+    success: true, 
+    message: 'User updated successfully' 
+  }).ok();
+}
 ```
 
----
-
-## Full Example
+### Handling Validation Errors
 
 ```ts
-import { composeController } from 'gaman/compose';
-import UserService from '../services/UserService';
-import type { RT } from 'gaman/types';
+export default async (ctx) => {
+  const body = await ctx.json();
+  
+  if (!body.username) {
+    return ctx.send({
+      username: ['Username is required']
+    }).unprocessable(null, 'Validation Failed');
+  }
 
-export default composeController(
-  (userService: RT<typeof UserService> = UserService()) => ({
-    // GET /users
-    GetAll(ctx) {
-      const users = userService.findAll();
-      return Res.send(users).meta({ total: users.length });
-    },
-
-    // GET /users/:id
-    GetById(ctx) {
-      const user = userService.findById(ctx.param('id'));
-      if (!user) return Res.message('User not found').notFound();
-      return Res.send(user);
-    },
-
-    // POST /users
-    async Create(ctx) {
-      const body = await ctx.json();
-
-      if (!body.email) {
-        return Res.error({ email: ['Email is required'] }, 422);
-      }
-
-      const user = userService.create(body);
-      return Res.send(user, { status: 201, message: 'User created' });
-    },
-
-    // DELETE /users/:id
-    Delete(ctx) {
-      userService.delete(ctx.param('id'));
-      return Res.send(null).noContent(); // 204 No Content
-    },
-  }),
-);
+  // ... logic
+}
 ```
 
-## Why Use `Res.send()`?
+### Sending Raw HTML
 
-> **Problem:** Most developers create API responses with different formats across endpoints. Some use `{ data: ... }`, `{ result: ... }`, `{ status: 'ok' }`, etc.
->
-> **Solution:** GamanJS enforces consistent response formatting through `Res`. All responses automatically have `success`, `message`, `data`, `errors`, and `metadata`.
+```ts
+export default (ctx) => {
+  return ctx.send('<h1>Welcome to GamanJS v2</h1>').ok();
+}
+```
+
+### Setting Cookies
+
+Cookies are also managed via the context:
+
+```ts
+export default (ctx) => {
+  ctx.cookies.set('session', 'abc-123', { httpOnly: true });
+  return ctx.send({ message: 'Cookie set' }).ok();
+}
+```
+ta`.
