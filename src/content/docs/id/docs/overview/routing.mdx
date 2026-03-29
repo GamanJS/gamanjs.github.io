@@ -161,11 +161,25 @@ export default composeRouter((r) => {
 
 ## Mounting Router Eksternal
 
+### Di Dalam Router Lain
+
 ```ts
-import UserRouter from '../user/UserRoutes';
+import UserRouter from '../user/UserRouter';
 
 export default composeRouter((r) => {
   r.mountRouter('/users', UserRouter);
+});
+```
+
+### Di Dalam `defineBootstrap`
+
+Router yang dibuat dengan `composeRouter` dapat dipanggil dengan prefix string saat melakukan mount di `defineBootstrap`:
+
+```ts
+import UserRouter from './modules/user/UserRouter';
+
+defineBootstrap(async (app) => {
+  app.mount(UserRouter('/user'));
 });
 ```
 

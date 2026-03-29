@@ -48,7 +48,22 @@ defineBootstrap(async (app) => {
   // Mount routes
   app.mount(AppRoutes);
 
+  // Mount routes dengan prefix path
+  app.mount(UserRouter('/user'));
+
   app.mountServer({ http: 3431 });
+});
+```
+
+### Route dengan Prefix
+
+Kamu bisa memberikan prefix path saat melakukan mount router:
+
+```ts
+import UserRouter from './modules/user/UserRouter';
+
+defineBootstrap(async (app) => {
+  app.mount(UserRouter('/user'));
 });
 ```
 

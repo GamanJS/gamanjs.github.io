@@ -2,31 +2,35 @@
 import { footer } from "../utils/content";
 ---
 
-<footer class="border-t border-gray-600/40 mt-14">
-  <div class="container">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start py-16">
-      <!-- START:IMAGE -->
-      <div>
-        <div class="flex justify-center">
+<footer class="border-t border-white/5 bg-black/20 backdrop-blur-md pt-20">
+  <div class="container pb-20">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-12 items-start">
+      <!-- START: LOGO -->
+      <div class="flex flex-col gap-6">
+        <div class="flex items-center gap-3">
           <img
-            src="/img/gaman-logo.png"
+            src="/img/new/3.png"
             alt="GamanJS"
-            class="drop-shadow-[0_0_30px_rgba(236,72,153,0.5)]"
+            class="h-10 w-auto"
           />
+          <span class="text-2xl font-black tracking-tighter text-white uppercase italic">GamanJS</span>
         </div>
+        <p class="text-slate-500 text-sm leading-relaxed max-w-xs">
+            A high-performance, functional-first backend framework built for the modern enterprise.
+        </p>
       </div>
-      <!-- END:IMAGE -->
+      <!-- END: LOGO -->
 
       <!-- START: DOCUMENTATION -->
       <div>
-        <h5 class="font-bold">
+        <h5 class="font-bold text-white uppercase tracking-widest text-xs mb-8">
           {footer.documents.title}
         </h5>
-        <div class="flex flex-col gap-2 mt-4">
+        <div class="flex flex-col gap-4">
           {
             footer.documents.links.map((item) => (
               <a
-                class="text-sm text-gray-400 hover:text-blue-400 transition-all"
+                class="text-sm text-slate-500 hover:text-blue-400 transition-colors"
                 href={item.url}
               >
                 {item.label}
@@ -39,15 +43,15 @@ import { footer } from "../utils/content";
 
       <!-- START: COMMUNITY -->
       <div>
-        <h5 class="font-bold">
+        <h5 class="font-bold text-white uppercase tracking-widest text-xs mb-8">
           {footer.community.title}
         </h5>
-        <div class="flex flex-col gap-2 mt-4">
+        <div class="flex flex-col gap-4">
           {
             footer.community.links.map((item) => (
               <a
                 target="_blank"
-                class="text-sm text-gray-400 hover:text-blue-400 transition-all"
+                class="text-sm text-slate-500 hover:text-blue-400 transition-colors"
                 href={item.url}
               >
                 {item.label}
@@ -60,14 +64,14 @@ import { footer } from "../utils/content";
 
       <!-- START: RESOURCE -->
       <div>
-        <h5 class="font-bold">
+        <h5 class="font-bold text-white uppercase tracking-widest text-xs mb-8">
           {footer.resource.title}
         </h5>
-        <div class="flex flex-col gap-2 mt-4">
+        <div class="flex flex-col gap-4">
           {
             footer.resource.links.map((item) => (
               <a
-                class="text-sm text-gray-400 hover:text-blue-400 transition-all"
+                class="text-sm text-slate-500 hover:text-blue-400 transition-colors"
                 href={item.url}
               >
                 {item.label}
@@ -79,12 +83,15 @@ import { footer } from "../utils/content";
       <!-- START: RESOURCE -->
     </div>
   </div>
-  <p class="text-center text-sm text-gray-400 border-t border-gray-600/40 py-6">
-    &copy; {new Date().getFullYear()} GamanJS. Powered by
-
-    <a
-      class="from-blue-400 to-indigo-400 bg-gradient-to-r bg-clip-text text-transparent"
-      href="https://gaman.7togk.id">7TogkID</a
-    >
-  </p>
+  
+  <div class="border-t border-white/5 py-8">
+    <div class="container flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-600 uppercase tracking-widest">
+        <p>&copy; {new Date().getFullYear()} GamanJS. ALL RIGHTS RESERVED.</p>
+        <div class="flex gap-8">
+            <a href="https://gaman.7togk.id" class="hover:text-white transition-colors">7TogkID</a>
+            <a href="/privacy-policy" class="hover:text-white transition-colors">Privacy</a>
+            <a href="/terms-of-service" class="hover:text-white transition-colors">Terms</a>
+        </div>
+    </div>
+  </div>
 </footer>

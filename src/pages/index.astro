@@ -5,6 +5,7 @@ import GamanLivePreview from "../components/GamanLivePreview.tsx";
 import Footer from "../components/Footer.astro";
 import Navbar from "../components/Navbar.astro";
 import HeroSection from "../components/sections/HeroSection.tsx";
+import Testimonials from "../components/sections/Testimonials.tsx";
 import "../styles/global.css";
 import { features, plugins } from "../utils/content";
 ---
@@ -36,117 +37,121 @@ import { features, plugins } from "../utils/content";
       });
     </script>
   </head>
-  <body class="bg-bg-primary text-blue-100 relative overflow-x-hidden">
+  <body class="bg-bg-primary text-slate-100 relative overflow-x-hidden selection:bg-blue-500/30">
     <!-- START: GRID BACKGROUND -->
-    <div class="fixed inset-0 z-[-1] pointer-events-none opacity-[0.03]" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 40px 40px;"></div>
+    <div class="fixed inset-0 z-[-1] pointer-events-none opacity-[0.05]" style="background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px); background-size: 50px 50px;"></div>
+    <div class="fixed inset-0 z-[-1] pointer-events-none bg-[radial-gradient(circle_at_50%_50%,rgba(17,24,39,1)_0%,rgba(3,7,18,1)_100%)]"></div>
     
     <Navbar />
     <main class="relative">
       <HeroSection client:load />
- <!-- START: CODE TABS DEMO -->
-      <section class="relative py-10 px-4">
-        <div class="max-w-6xl mx-auto">
-          <h3
-            class="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-500 via-indigo-400 to-white bg-clip-text text-transparent"
-          >
-            Lean Architecture for Scale
-          </h3>
-          <p class="w-[90%] text-text-primary mb-10">
-            GamanJS adopts a lean, <span class="text-blue-300">functional-first</span>
-            design engineered for high-scale environments. Rejecting bloated OOP patterns, everything is built through <span class="text-indigo-300"
-              >composable functions</span
-            > like
-            <code class="bg-white/10 px-1.5 py-0.5 rounded-md text-blue-200"
-              >compose</code
-            >,
-            <code class="bg-white/10 px-1.5 py-0.5 rounded-md text-blue-200"
-              >define</code
-            >, and <code
-              class="bg-white/10 px-1.5 py-0.5 rounded-md text-blue-200"
-              >mount</code
-            >. This ensures your backend remains declarative, robust, and capable of heavy-duty performance.
-          </p>
 
-          <CodeTabs client:load />
+      <!-- START: CODE TABS DEMO -->
+      <section class="relative py-32 px-6 border-t border-white/5">
+        <div class="max-w-6xl mx-auto">
+          <div class="flex flex-col md:flex-row gap-16 items-end mb-20">
+            <div class="md:w-1/2">
+                <h3 class="text-3xl md:text-5xl font-extrabold mb-8 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent italic tracking-tight leading-tight">
+                    LEAN ARCHITECTURE.
+                </h3>
+                <p class="text-lg md:text-xl text-slate-400 max-w-xl leading-relaxed">
+                    GamanJS adopts a <span class="text-blue-400 font-semibold">functional-first</span>
+                    design engineered for high-scale environments. Rejecting bloated OOP patterns, everything is built through <span class="text-white border-b border-blue-500/30 font-medium">composable functions</span>.
+                </p>
+            </div>
+            <div class="md:w-1/2 flex justify-end">
+                <div class="flex gap-4">
+                    <div class="flex flex-col items-center">
+                        <span class="text-3xl font-bold text-white tracking-tight">0%</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-[0.2em] leading-loose font-bold">Bloatware</span>
+                    </div>
+                    <div class="w-px h-12 bg-white/10 mx-6"></div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-3xl font-bold text-white tracking-tight">100%</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-[0.2em] leading-loose font-bold">Type Safe</span>
+                    </div>
+                </div>
+            </div>
+          </div>
+
+          <div class="relative group">
+            <div class="absolute -inset-4 bg-blue-500/5 rounded-[2rem] blur-2xl group-hover:bg-blue-500/10 transition-all duration-700"></div>
+            <div class="relative">
+                <CodeTabs client:load />
+            </div>
+          </div>
         </div>
       </section>
 
       <!-- START: FEATURE SHOWCASE -->
-      <section class="relative py-24 px-4 overflow-hidden">
+      <section class="relative py-32 px-6 overflow-hidden bg-white/[0.01]">
         <div class="max-w-6xl mx-auto">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <div>
-              <h3 class="text-4xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-white bg-clip-text text-transparent">
-                Modular by Design
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-24 items-center">
+            <div class="order-2 md:order-1">
+              <h3 class="text-3xl md:text-5xl font-extrabold mb-10 bg-gradient-to-br from-white to-slate-500 bg-clip-text text-transparent leading-tight tracking-tight">
+                Modular <br/>by Design.
               </h3>
-              <p class="text-lg text-blue-100/70 leading-relaxed mb-8">
-                GamanJS enforces a <span class="text-blue-300 font-semibold">feature-first</span> structure. 
+              <p class="text-lg md:text-xl text-slate-400 leading-relaxed mb-12">
+                GamanJS enforces a <span class="text-blue-400 font-medium">feature-first</span> structure. 
                 Keep your logic isolated, your controllers clean, and your scaling predictable.
               </p>
               
-              <div class="space-y-6">
-                <div class="flex gap-4 items-start">
-                  <div class="p-2 rounded-lg bg-blue-500/20 border border-blue-500/30">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+              <div class="grid gap-10">
+                <div class="group flex gap-8 items-start p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-blue-500/20 transition-all duration-500">
+                  <div class="p-4 rounded-2xl bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
                   </div>
                   <div>
-                    <h4 class="text-lg font-bold text-white mb-1">Encapsulated Modules</h4>
-                    <p class="text-blue-100/60 font-medium">Group logic by features, not layers. Scalability starts with boundaries.</p>
+                    <h4 class="text-lg font-bold text-white mb-2 tracking-wide uppercase">Encapsulated Modules</h4>
+                    <p class="text-slate-400 leading-relaxed font-medium">Group logic by features, not layers. Scalability starts with boundaries.</p>
                   </div>
                 </div>
                 
-                <div class="flex gap-4 items-start">
-                  <div class="p-2 rounded-lg bg-indigo-500/20 border border-indigo-500/30">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                <div class="group flex gap-8 items-start p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-indigo-500/20 transition-all duration-500">
+                  <div class="p-4 rounded-2xl bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500/20 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
                   </div>
                   <div>
-                    <h4 class="text-lg font-bold text-white mb-1">Functional Composition</h4>
-                    <p class="text-blue-100/60 font-medium">Compose your backend with pure functions. No hidden state, no complex classes.</p>
-                  </div>
-                </div>
-
-                <div class="flex gap-4 items-start">
-                  <div class="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
-                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
-                  </div>
-                  <div>
-                    <h4 class="text-lg font-bold text-white mb-1">Type-Safe DI</h4>
-                    <p class="text-blue-100/60 font-medium">First-class support for dependency injection through simple function destructuring.</p>
+                    <h4 class="text-lg font-bold text-white mb-2 tracking-wide uppercase">Functional Composition</h4>
+                    <p class="text-slate-400 leading-relaxed font-medium">Compose your backend with pure functions. No hidden state, no complex classes.</p>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div class="relative group">
-              <div class="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-              <div class="relative bg-stone-900 border border-white/10 rounded-2xl p-8 shadow-2xl backdrop-blur-xl">
-                <div class="flex items-center gap-2 mb-6">
-                  <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                  <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span class="ml-4 text-stone-500 font-mono text-sm">src/modules/billing/</span>
+            <div class="order-1 md:order-2 relative group">
+              <div class="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-3xl blur opacity-10 group-hover:opacity-25 transition duration-1000"></div>
+              <div class="relative bg-black border border-white/5 rounded-[2.5rem] p-12 shadow-2xl backdrop-blur-3xl overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full translate-x-10 -translate-y-10"></div>
+                <div class="flex items-center gap-2 mb-10">
+                  <div class="flex gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
+                  </div>
+                  <span class="ml-6 text-slate-600 font-mono text-[10px] tracking-[0.3em] uppercase font-bold">system_architecture</span>
                 </div>
-                <div class="font-mono text-sm space-y-3">
-                  <div class="flex gap-3 text-stone-400">
-                    <span class="text-blue-400">├──</span>
-                    <span>controllers/BillingController.ts</span>
+                <div class="font-mono text-sm space-y-5">
+                  <div class="flex gap-4 text-slate-400 group-hover:text-blue-300 transition-colors">
+                    <span class="text-blue-500/50">→</span>
+                    <span>src/modules/billing/</span>
                   </div>
-                  <div class="flex gap-3 text-stone-400">
-                    <span class="text-blue-400">├──</span>
-                    <span>services/TaxService.ts</span>
+                  <div class="pl-8 flex gap-4 text-slate-600 hover:text-white transition-colors cursor-default">
+                    <span class="text-slate-800">├──</span>
+                    <span>Controllers.ts</span>
                   </div>
-                  <div class="flex gap-3 text-stone-400">
-                    <span class="text-blue-400">├──</span>
-                    <span>middlewares/AuditLog.ts</span>
+                  <div class="pl-8 flex gap-4 text-slate-600 hover:text-white transition-colors cursor-default">
+                    <span class="text-slate-800">├──</span>
+                    <span>Services.ts</span>
                   </div>
-                  <div class="flex gap-3 text-stone-400">
-                    <span class="text-blue-400">└──</span>
-                    <span class="text-indigo-300">BillingRoutes.ts</span>
+                  <div class="pl-8 flex gap-4 text-slate-400 hover:text-white transition-colors cursor-default">
+                    <span class="text-slate-800">└──</span>
+                    <span class="text-indigo-400">Routes.ts</span>
                   </div>
                 </div>
-                <div class="mt-8 pt-6 border-t border-white/5">
-                  <p class="text-blue-100/60 text-sm leading-relaxed">
-                    Designed for teams who value <span class="text-white">clarity</span> over <span class="text-white">magic</span>. 
+                <div class="mt-12 pt-10 border-t border-white/5">
+                  <p class="text-slate-500 text-sm leading-relaxed italic font-medium">
+                    Designed for teams who value <span class="text-white">clarity</span> over magic. 
                     Every dependency is explicit, every route is traceable.
                   </p>
                 </div>
@@ -156,71 +161,33 @@ import { features, plugins } from "../utils/content";
         </div>
       </section>
 
-      <!-- START: CTA SECTION -->
-      <section class="relative py-12 px-4">
-        <div class="max-w-4xl mx-auto text-center py-16 px-8 rounded-3xl bg-gradient-to-b from-blue-500/10 to-indigo-500/5 border border-white/5 backdrop-blur-md">
-          <h2 class="text-3xl md:text-5xl font-bold text-white mb-6">
-            Ready to Build at Scale?
-          </h2>
-          <p class="text-xl text-blue-100/70 mb-10 max-w-2xl mx-auto">
-            Experience the logic-first framework that doesn't get in your way. 
-            Light as a ghost, solid as a rock.
-          </p>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/docs/overview/first-steps" class="px-8 py-4 rounded-xl bg-blue-500 hover:bg-blue-400 text-white font-bold transition-all shadow-lg shadow-blue-500/20">
-              Get Started for Free
-            </a>
-            <a href="https://github.com/7TogkID/gaman" target="_blank" class="px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold transition-all">
-              View on GitHub
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <section class="relative py-16 px-4 bg-bg-primary/40 backdrop-blur-sm">
-        <div class="max-w-6xl mx-auto">
-          <GamanLivePreview client:load />
-        </div>
-      </section>
-
-
       <!-- START: Key Features -->
-      <section class="relative py-24">
-        <div class="max-w-6xl mx-auto px-6 relative z-10">
-          <h2 class="text-4xl md:text-5xl font-bold text-center mb-6">
-            Why <span
-              class="from-blue-400 to-indigo-300 bg-gradient-to-r bg-clip-text text-transparent"
-              >Modern Teams</span
-            >
-            Choose <span
-              class="from-white via-blue-100 to-blue-200 bg-gradient-to-r bg-clip-text text-transparent"
-              >GamanJS</span
-            >
-          </h2>
+      <section class="relative py-32 px-6">
+        <div class="max-w-6xl mx-auto relative z-10">
+          <div class="text-center mb-28">
+            <h2 class="text-3xl md:text-5xl font-extrabold mb-8 italic tracking-tight uppercase leading-tight">WHY MODERN TEAMS CHOOSE GAMANJS</h2>
+            <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
+              {features.description}
+            </p>
+          </div>
 
-          <p class="text-xl text-blue-100/60 text-center max-w-2xl mx-auto mb-16">
-            {features.description}
-          </p>
-
-          <div
-            class="grid grid-cols-1 md:grid-cols-2 gap-8"
-          >
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
             {
               features.items.map((item) => {
                 const Icon = item.icon;
 
                 return (
-                  <div class="group relative p-8 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-blue-500/30 transition-all duration-500 overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div class="relative flex gap-6 items-start">
-                      <div class="p-3 rounded-xl bg-blue-500/20 text-blue-400 group-hover:scale-110 transition-transform duration-500">
+                  <div class="group relative p-12 rounded-[2.5rem] bg-white/[0.02] border border-white/5 hover:border-blue-500/20 transition-all duration-500 overflow-hidden backdrop-blur-sm">
+                    <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div class="relative flex flex-col gap-8">
+                      <div class="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-500/20 transition-all duration-500">
                         <Icon class="w-8 h-8" />
                       </div>
                       <div>
-                        <h3 class="text-2xl font-bold text-white mb-2">
+                        <h3 class="text-2xl font-bold text-white mb-4 tracking-tight">
                           {item.title}
                         </h3>
-                        <p class="text-blue-100/70 leading-relaxed">{item.text}</p>
+                        <p class="text-slate-400 leading-relaxed font-medium">{item.text}</p>
                       </div>
                     </div>
                   </div>
@@ -228,79 +195,60 @@ import { features, plugins } from "../utils/content";
               })
             }
           </div>
-        </div>
-
-        <div
-          class="absolute top-1/2 left-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] -translate-y-1/2"
-        >
         </div>
       </section>
-      <!-- END: Key Features -->
 
-      <!-- START: Plugins -->
-      <!-- <section class="relative py-24 bg-white/[0.01]">
-        <div class="max-w-6xl mx-auto px-6 relative z-10">
-          <h2 class="text-4xl md:text-5xl font-bold text-center mb-6">
-            Everything You Need, <span
-              class="from-indigo-400 to-purple-400 bg-gradient-to-r bg-clip-text text-transparent"
-              >Zero Bloat</span
-            >
-          </h2>
-
-          <p class="text-xl text-blue-100/60 text-center max-w-2xl mx-auto mb-16">
-            Official plugins for common use cases. Simple, documented, and modular.
-          </p>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {
-              plugins.items.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <div class="group relative p-6 rounded-2xl bg-stone-900/50 border border-white/5 hover:border-indigo-500/30 transition-all duration-500">
-                    <div class="flex items-center gap-4 mb-4">
-                      <div class="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 group-hover:text-blue-300 transition-colors">
-                        <Icon class="w-6 h-6" />
-                      </div>
-                      <h4 class="text-lg font-bold text-white/90">
-                        {item.title}
-                      </h4>
-                    </div>
-                    <p class="text-sm text-blue-100/50 leading-relaxed">
-                      {item.text}
-                    </p>
-                  </div>
-                );
-              })
-            }
+      <!-- START: LIVE PREVIEW -->
+      <section class="relative py-32 px-6 bg-blue-500/[0.01] border-y border-white/5">
+        <div class="max-w-6xl mx-auto">
+          <div class="text-center mb-20">
+            <span class="text-blue-500 font-mono text-[10px] uppercase tracking-[0.4em] font-black mb-6 block opacity-80">Interactive Demo</span>
+            <h2 class="text-3xl md:text-5xl font-extrabold uppercase tracking-tight italic">See it in action.</h2>
           </div>
+          <GamanLivePreview client:load />
         </div>
-      </section> -->
-      <!-- END: Plugins -->
+      </section>
 
+      <Testimonials client:load />
 
-
-      <section
-        class="py-24 px-6 relative overflow-hidden"
-      >
+      <!-- START: COMMUNITY -->
+      <section class="py-32 px-6 relative">
         <div class="max-w-6xl mx-auto text-center relative z-10">
-          <h3
-            class="text-4xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent"
-          >
-            Built by Developers, for Developers
-          </h3>
-          <p class="text-xl text-blue-100/60 mb-12 max-w-2xl mx-auto">
+          <h3 class="text-3xl md:text-5xl font-extrabold mb-10 italic tracking-tight uppercase leading-tight">Built by Developers,<br/>for Developers</h3>
+          <p class="text-lg md:text-xl text-slate-400 mb-20 max-w-2xl mx-auto leading-relaxed font-medium">
             GamanJS is an open-source project shaped by community contributions.
           </p>
-          <Contributors client:load />
+          <div class="relative p-12 rounded-[3.5rem] bg-white/[0.02] border border-white/5 backdrop-blur-md">
+            <Contributors client:load />
+          </div>
         </div>
-        
-        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+      </section>
+
+      <!-- START: CTA SECTION -->
+      <section class="relative py-32 px-6 overflow-hidden">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-96 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
+        <div class="max-w-4xl mx-auto text-center py-24 px-10 rounded-[3.5rem] bg-white/[0.02] border border-white/10 backdrop-blur-3xl relative">
+          <h2 class="text-4xl md:text-6xl font-extrabold text-white mb-8 tracking-tight uppercase leading-[1.1]">
+            Ready to Build <br/>at Scale?
+          </h2>
+          <p class="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
+            Experience the logic-first framework that doesn't get in your way. 
+            Light as a ghost, solid as a rock.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-6 justify-center">
+            <a href="/docs/overview/first-steps" class="px-12 py-5 rounded-2xl bg-white text-bg-primary font-bold hover:bg-slate-200 transition-all active:scale-95 shadow-xl shadow-white/5">
+              Get Started for Free
+            </a>
+            <a href="https://github.com/7TogkID/gaman" target="_blank" class="px-12 py-5 rounded-2xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 hover:border-white/20 transition-all backdrop-blur-md">
+              View on GitHub
+            </a>
+          </div>
+        </div>
       </section>
     </main>
-  </body>
 
-  <Footer />
+    <Footer />
+  </body>
 
   <!-- boleh di pindah ini buat matiin popup nya -->
   <style>

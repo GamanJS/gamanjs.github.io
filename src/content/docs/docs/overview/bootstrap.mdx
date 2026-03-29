@@ -48,7 +48,22 @@ defineBootstrap(async (app) => {
   // Mount routes
   app.mount(AppRoutes);
 
+  // Mount routes with prefix path
+  app.mount(UserRouter('/user'));
+
   app.mountServer({ http: 3431 });
+});
+```
+
+### Route with Prefix
+
+You can provide a prefix path when mounting a router:
+
+```ts
+import UserRouter from './modules/user/UserRouter';
+
+defineBootstrap(async (app) => {
+  app.mount(UserRouter('/user'));
 });
 ```
 

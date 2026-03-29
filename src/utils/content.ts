@@ -15,6 +15,10 @@ export const navbar = {
       label: "Docs",
       url: "/docs",
     },
+    {
+      label: "Blogs",
+      url: "/blogs",
+    },
   ],
 };
 
@@ -146,7 +150,7 @@ export const footer = {
       },
       {
         label: "Blog",
-        url: "#",
+        url: "/blogs",
       },
       {
         label: "Brand Guidelines",

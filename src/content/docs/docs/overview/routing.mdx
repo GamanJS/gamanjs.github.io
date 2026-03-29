@@ -161,11 +161,25 @@ export default composeRouter((r) => {
 
 ## Mounting External Routers
 
+### In Another Router
+
 ```ts
-import UserRouter from '../user/UserRoutes';
+import UserRouter from '../user/UserRouter';
 
 export default composeRouter((r) => {
   r.mountRouter('/users', UserRouter);
+});
+```
+
+### In `defineBootstrap`
+
+Routers created with `composeRouter` can be called with a prefix string when being mounted in `defineBootstrap`:
+
+```ts
+import UserRouter from './modules/user/UserRouter';
+
+defineBootstrap(async (app) => {
+  app.mount(UserRouter('/user'));
 });
 ```
 
