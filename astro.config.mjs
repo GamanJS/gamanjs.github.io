@@ -12,12 +12,13 @@ export default defineConfig({
       allowedHosts: [
         "gaman.7togk.id",
         "gaman-docs.vercel.app",
+        "gaman.js.org",
         "gamanjs.github.io",
       ],
     },
     plugins: [tailwindcss()],
   },
-  site: "https://gaman.7togk.id",
+  site: "https://gaman.js.org",
   server: {
     port: 3521,
     host: "0.0.0.0",
